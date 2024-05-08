@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:/Program Files/clang/include"
+            ],
+            "defines": [],
+            "compilerPath": "C:/Program Files/clang/bin/clang++.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "windows-clang-x64"
+        },
+        {
+            "name": "Clangd Config",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:/Program Files/clang/include"
+            ],
+            "defines": [],
+            "compilerPath": "C:/Program Files/clang/bin/clangd.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
