@@ -1,4 +1,3 @@
 {
-    "editor.formatOnSave": true,
-    "clang-format.executable": "C:/Program Files/clang/bin"
+    "editor.formatOnSave": true
 }
