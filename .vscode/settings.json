@@ -1,6 +1,11 @@
 {
     "editor.formatOnSave": true,
-    "cmake.configureSettings": {
-        "CMAKE_TOOLCHAIN_FILE": "[vcpkg root]/scripts/buildsystems/vcpkg.cmake"
-    }
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "cmake.generator": "Ninja",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/services/video-pre-processing/build/compile_commands.json",
+    "cmake.configureOnOpen": true,
+    "files.associations": {
+        "ostream": "cpp"
+    },
 }
