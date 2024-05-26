@@ -32,7 +32,7 @@ std::string generateUUID() {
 }
 
 redisContext* RedisConnect(const std::string& ip, const std::size_t port) {
-    redisContext *c = redisConnect("127.0.0.1", 6379);
+    redisContext *c = redisConnect(ip.c_str(), port);
     if (c == nullptr || c->err) {
         if (c) {
             std::cerr << "Error: " << c->errstr << std::endl;
