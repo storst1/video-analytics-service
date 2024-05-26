@@ -4,7 +4,7 @@
 
 namespace redis_utils {
 
-std::string generateUUID() {
+std::string GenerateUUID() {
     #ifdef _WIN32
     GUID guid;
     CoCreateGuid(&guid);
@@ -58,9 +58,10 @@ redisReply* RedisGetByKey(redisContext *redis_conn, const char* format, ...) {
     return reply;
 }
 
-void RedisSaveVideoRequest(redisContext *redis_conn, const VideoRequest& request) {
+void RedisSaveVideoRequest(redisContext *redis_conn, const requests::VideoRequest& request) {
     redisCommand(redis_conn, "HMSET request:%s id %s path %s status %s", 
-                     request.id.c_str(), request.id.c_str(), request.path.c_str(), request.status.c_str());
+                     request.id.c_str(), request.id.c_str(), request.path.c_str(), 
+                     requests::VideoStatusToString(request.status).c_str());
     redisFree(redis_conn);
 }
 

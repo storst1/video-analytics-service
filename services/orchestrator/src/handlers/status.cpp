@@ -17,7 +17,7 @@ void BindStatusHandler(crow::SimpleApp& app) {
             return crow::response(404, "Request not found");
         }
 
-        redis_utils::VideoRequest request;
+        requests::VideoRequest request;
         for (size_t i = 0; i < reply->elements; i += 2) {
             std::string key = reply->element[i]->str;
             std::string value = reply->element[i+1]->str;
