@@ -9,6 +9,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Включение генерации compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Определение пути к Asio относительно корневой директории проекта
+set(ASIO_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../../deps/asio/asio/include")
+
+# Вывод сообщения с путем к Asio
+message(STATUS "ASIO_INCLUDE_DIR is set to ${ASIO_INCLUDE_DIR}")
+
 include(FetchContent)
 
 # Загрузка и сборка Crow
