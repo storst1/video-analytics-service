@@ -5,8 +5,9 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "C:/Program Files/clang/include",
+                "${workspaceFolder}/deps/asio/asio/include",
                 "${workspaceFolder}/services/video-pre-processing/build/_deps/crow-src/include",
-                "D:/Projects/asio/asio/include"
+                "${workspaceFolder}/services/orchestrator/build/_deps/crow-src/include"
             ],
             "defines": [],
             "compilerPath": "C:/Program Files/clang/bin/clang++.exe",
@@ -19,8 +20,9 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "C:/Program Files/clang/include",
+                "${workspaceFolder}/deps/asio/asio/include",
                 "${workspaceFolder}/services/video-pre-processing/build/_deps/crow-src/include",
-                "D:/Projects/asio/asio/include"
+                "${workspaceFolder}/services/orchestrator/build/_deps/crow-src/include"
             ],
             "defines": [],
             "compilerPath": "C:/Program Files/clang/bin/clang++.exe",
