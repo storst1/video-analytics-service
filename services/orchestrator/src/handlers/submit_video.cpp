@@ -18,7 +18,7 @@ void OnYoloAnalyzeComplete(const crow::response& response) {
 
 void OnProcessVideoComplete(const crow::response& response, utils::http::RequestsChain& chain, const std::string& id) {
     if (response.code == 200) {
-        std::string frames_folder = "./frames-" + id;
+        std::string frames_folder = "../../../tmp/frames/frames-" + id;
         chain.AddRequest("127.0.0.1", "8082", "/yolo_analyze_frames", frames_folder, OnYoloAnalyzeComplete);
         chain.Execute();
     } else {

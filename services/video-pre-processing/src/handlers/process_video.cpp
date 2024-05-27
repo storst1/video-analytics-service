@@ -31,7 +31,7 @@ void BindProcessVideoHandler(crow::SimpleApp& app) {
 
         std::string video_path = body["video_path"].s();
         std::string redis_id = body["redis_id"].s();
-        std::string output_path = "./frames-" + redis_id;
+        std::string output_path = "../../../tmp/frames/frames-" + redis_id;
 
         // Создаем директорию для фреймов
         fs::create_directory(output_path);

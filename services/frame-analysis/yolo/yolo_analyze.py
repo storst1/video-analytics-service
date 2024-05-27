@@ -98,23 +98,12 @@ async def analyze_frames(folder_path):
 
     return json.dumps(result_json)
 
-def check_model_config(weight_file):
-    model = torch.load(weight_file)
-    print(model.keys())
-    if 'model' in model:
-        print(model['model'])
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print(json.dumps({"Yolo analyze python script error": "Usage: yolo_analyze.py <folder_path>"}))
         sys.exit(1)
 
-    if not os.path.exists(weight_file):
-        print(f"Weight file {weight_file} does not exist.")
-        sys.exit(1)
-    
-    check_model_config(weight_file)
-        
     folder_path = sys.argv[1]
     try:
         result = asyncio.run(analyze_frames(folder_path))
