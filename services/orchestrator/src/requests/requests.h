@@ -6,7 +6,14 @@ namespace requests {
 
 enum class VideoStatus {
     Received = 1,
-    PreProcessing = 2
+    PreProcessingFrames = 2,
+    PreProcessingResize = 3,
+    YoloStarted = 4,
+    YoloFinished = 5,
+    FramesCleanUp = 6,
+    PostProcessing = 7,
+    Finished = 8,
+    Failed = 9
 };
 
 struct VideoRequest {

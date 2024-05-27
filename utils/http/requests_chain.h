@@ -5,6 +5,7 @@
 #include <crow.h>
 #include <vector>
 #include <functional>
+#include <string>
 
 namespace utils {
 namespace http {

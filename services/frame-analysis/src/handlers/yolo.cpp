@@ -40,7 +40,7 @@ void BindYoloHandler(crow::SimpleApp& app) {
             auto result_future = RunYoloScriptAsync(folder_path);
             result_future.wait();
             std::string result = result_future.get();
-            std::cout << result << std::endl;
+            std::cout << "/yolo_analyze_frames finished with response=" << result << std::endl;
             res.write(result);
             res.end();
         } catch (const std::exception& e) {

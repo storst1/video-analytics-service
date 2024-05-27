@@ -65,4 +65,20 @@ void RedisSaveVideoRequest(redisContext *redis_conn, const requests::VideoReques
     redisFree(redis_conn);
 }
 
+void RedisUpdateVideoStatus(redisContext *redis_conn, const std::string& key, requests::VideoStatus new_status) {
+    if (redis_conn == nullptr) {
+        std::cerr << "Redis connection is null" << std::endl;
+        return;
+    }
+
+    const std::string command = "HSET request:" + key + " status " + requests::VideoStatusToString(new_status);
+    redisReply *reply = static_cast<redisReply*>(redisCommand(redis_conn, command.c_str()));
+    if (reply == nullptr) {
+        std::cerr << "Failed to execute command: " << command << std::endl;
+        return;
+    }
+
+    freeReplyObject(reply);
+}
+
 } // namespace redis_utils
