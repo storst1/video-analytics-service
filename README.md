@@ -8,3 +8,5 @@ TODO:
 - Healthcheck
 - State machine (?)
 - Конфиг(и) с хостами и портами сервисов + редиса
+- ffmpeg для Linux и по возможности macOS
+  
