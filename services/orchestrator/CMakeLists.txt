@@ -45,10 +45,12 @@ include_directories(${hiredis_SOURCE_DIR})
 
 # Установка include-директории для всех исходных файлов
 include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${CMAKE_SOURCE_DIR}/../../utils/http)
+include_directories(${CMAKE_SOURCE_DIR}/../../utils/redis)
 
 # Добавление исходных файлов
-file(GLOB_RECURSE SOURCES "src/*.cpp")
-file(GLOB_RECURSE HEADERS "include/*.h")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/*.h")
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
