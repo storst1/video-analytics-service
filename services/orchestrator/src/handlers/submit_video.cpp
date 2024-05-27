@@ -8,21 +8,18 @@ namespace handlers {
 
 namespace {
 
-void OnYoloAnalyzeComplete(bool success) {
-    if (success) {
+void OnYoloAnalyzeComplete(const crow::response& response) {
+    if (response.code == 200) {
         std::cout << "YOLO analysis started successfully\n";
     } else {
         std::cout << "Failed to start YOLO analysis\n";
     }
 }
 
-void OnProcessVideoComplete(bool success, utils::http::RequestChain& chain, const std::string& id) {
-    if (success) {
-        crow::json::wvalue yolo_body;
-        yolo_body["redis_id"] = id;
+void OnProcessVideoComplete(const crow::response& response, utils::http::RequestsChain& chain, const std::string& id) {
+    if (response.code == 200) {
         std::string frames_folder = "./frames-" + id;
-        yolo_body["frames_path"] = frames_folder;
-        chain.AddRequest("127.0.0.1", "8081", "/yolo_analyze_frames", yolo_body, OnYoloAnalyzeComplete);
+        chain.AddRequest("127.0.0.1", "8081", "/yolo_analyze_frames", frames_folder, OnYoloAnalyzeComplete);
         chain.Execute();
     } else {
         std::cout << "Failed to start video processing\n";
@@ -46,15 +43,17 @@ void SubmitVideoHandler(const crow::request& req, crow::response& res) {
     // Save request to redis
     redis_utils::RedisSaveVideoRequest(redis_conn, video_request);
 
-    // Create a RequestChain and perform the first HTTP POST request
+    // Create a RequestsChain and perform the first HTTP POST request
     asio::io_context io_context;
-    utils::http::RequestChain chain(io_context);
+    utils::http::RequestsChain chain(io_context);
 
     crow::json::wvalue body;
     body["redis_id"] = id;
     body["video_path"] = video_path;
     chain.AddRequest("127.0.0.1", "8081", "/process_video", body, 
-        std::bind(OnProcessVideoComplete, std::placeholders::_1, std::ref(chain), id));
+        [&chain, id](const crow::response& response) {
+            OnProcessVideoComplete(response, chain, id);
+        });
     chain.Execute();
 
     res.code = 200;
