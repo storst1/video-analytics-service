@@ -17,22 +17,23 @@ void BindStatusHandler(crow::SimpleApp& app) {
             return crow::response(404, "Request not found");
         }
 
-        requests::VideoRequest request;
+        crow::json::wvalue response;
         for (size_t i = 0; i < reply->elements; i += 2) {
             std::string key = reply->element[i]->str;
             std::string value = reply->element[i+1]->str;
-            if (key == "id") request.id = value;
-            else if (key == "path") request.path = value;
-            else if (key == "status") request.status = value;
+            if (key == "id") {
+                response["id"] = value;
+            }
+            else if (key == "path") { 
+                response["path"] = value;
+            }
+            else if (key == "status") { 
+                response["status"] = value;
+            }
         }
 
         freeReplyObject(reply);
         redisFree(redis_conn);
-
-        crow::json::wvalue response;
-        response["id"] = request.id;
-        response["path"] = request.path;
-        response["status"] = request.status;
 
         return crow::response(200, response);
     });

@@ -1,13 +1,9 @@
-#include <crow.h>
+#include "handlers/handlers_frw.h"
 
 int main() {
     crow::SimpleApp app;
 
-    CROW_ROUTE(app, "/")([](){
-        return "Hello, World!";
-    });
+    handlers::BindProcessVideoHandler(app);
 
-    app.port(18080).multithreaded().run();
-
-    return 0;
+    app.port(8081).multithreaded().run();
 }

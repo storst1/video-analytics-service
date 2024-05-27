@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.10)
-
 project(video_pre_processing)
 
 # Установка стандартов C++
@@ -26,13 +25,34 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(crow)
 
-# Установка путей к заголовочным файлам Crow и Asio
+# Установка пути к заголовочным файлам
 include_directories(${crow_SOURCE_DIR}/include)
 include_directories(${ASIO_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# Добавление исходных файлов
-file(GLOB SOURCES "src/*.cpp")
+# Определение пути к исполняемым файлам FFmpeg
+if(WIN32)
+    set(FFMPEG_EXECUTABLE "${CMAKE_SOURCE_DIR}/../../deps/ffmpeg/windows/bin/ffmpeg.exe")
+elseif(UNIX)
+    set(FFMPEG_EXECUTABLE "${CMAKE_SOURCE_DIR}/../../deps/ffmpeg/linux/bin/ffmpeg")
+endif()
+
+# Вывод сообщения с путем к FFmpeg
+message(STATUS "FFMPEG_EXECUTABLE is set to ${FFMPEG_EXECUTABLE}")
+
+# Передача пути к FFmpeg в код через макрос
+add_definitions(-DFFMPEG_EXECUTABLE=\"${FFMPEG_EXECUTABLE}\")
+
+# Установка исходных файлов
+file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# Так как Crow это заголовочная библиотека, нет необходимости явно указывать линковку
+# Линковка библиотек (если есть необходимость в дополнительных библиотеках, добавьте их здесь)
+target_link_libraries(${PROJECT_NAME} ${crow_LIBRARIES})
+
+# Установка флагов для NASM (если используется NASM)
+if(NOT MSVC)
+    set(CMAKE_ASM_NASM_OBJECT_FORMAT win64)
+    set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -g cv8 -D__x86_64__")
+endif()

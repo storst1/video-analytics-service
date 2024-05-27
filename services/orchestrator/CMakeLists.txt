@@ -42,20 +42,30 @@ message(STATUS "hiredis_BINARY_DIR is set to ${hiredis_BINARY_DIR}")
 include_directories(${crow_SOURCE_DIR}/include)
 include_directories(${ASIO_INCLUDE_DIR})
 include_directories(${hiredis_SOURCE_DIR})
-include_directories(${hiredis_BINARY_DIR})
+
+# Установка include-директории для всех исходных файлов
+include_directories(${CMAKE_SOURCE_DIR}/src)
 
 # Добавление исходных файлов
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.h")
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 # Линковка библиотек
 target_link_libraries(${PROJECT_NAME} hiredis)
 
-# Копирование hiredis.dll в директорию с исполняемым файлом
+# Копирование hiredisd.dll в директорию с исполняемым файлом
 if (WIN32)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${hiredis_BINARY_DIR}/hiredisd.dll"
         $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+endif()
+
+# Определение _WIN32_WINNT
+if(MSVC)
+    add_definitions(-D_WIN32_WINNT=0x0A00)
+else()
+    add_definitions(-D_WIN32_WINNT=0x0601)
 endif()

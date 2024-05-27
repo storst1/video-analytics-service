@@ -121,6 +121,8 @@
         "xutility": "cpp",
         "*.tcc": "cpp",
         "netfwd": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp"
     },
 }
