@@ -40,10 +40,11 @@ include_directories(${ASIO_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${hiredis_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/../utils/redis)
+include_directories(${CMAKE_SOURCE_DIR}/../utils/http)
 
 # Добавление исходных файлов
-file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.cpp")
-file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.h")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/http/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.h" "${CMAKE_SOURCE_DIR}/../../utils/http/*.h")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 

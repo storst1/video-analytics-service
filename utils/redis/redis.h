@@ -12,7 +12,7 @@
 #include <uuid/uuid.h>
 #endif
 
-#include "../../services/orchestrator/src/requests/requests.h"
+#include "../http/requests.h"
 
 namespace redis_utils {
 
