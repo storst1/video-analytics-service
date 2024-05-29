@@ -3,7 +3,7 @@
     "cmake.sourceDirectory": "${workspaceFolder}",
     "cmake.generator": "Ninja",
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "C_Cpp.default.compileCommands": "${workspaceFolder}\\services\\frame-analysis\\build\\compile_commands.json",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}\\services\\video-post-processing\\build\\compile_commands.json",
     "cmake.configureOnOpen": true,
     "files.associations": {
         "ostream": "cpp",

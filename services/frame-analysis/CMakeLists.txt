@@ -25,18 +25,38 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(crow)
 
+# Загрузка и сборка hiredis
+FetchContent_Declare(
+    hiredis
+    GIT_REPOSITORY https://github.com/redis/hiredis.git
+    GIT_TAG master
+)
+
+FetchContent_MakeAvailable(hiredis)
+
 # Установка пути к заголовочным файлам
 include_directories(${crow_SOURCE_DIR}/include)
 include_directories(${ASIO_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${hiredis_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/../utils/redis)
 
-# Установка исходных файлов
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+# Добавление исходных файлов
+file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.h")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Линковка библиотек (если есть необходимость в дополнительных библиотеках, добавьте их здесь)
-target_link_libraries(${PROJECT_NAME} ${crow_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${crow_LIBRARIES} hiredis)
+
+# Копирование hiredisd.dll в директорию с исполняемым файлом
+if (WIN32)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${hiredis_BINARY_DIR}/hiredisd.dll"
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+endif()
 
 # Установка флагов для NASM (если используется NASM)
 if(NOT MSVC)

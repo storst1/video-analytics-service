@@ -1,6 +1,12 @@
 #include "redis.h"
 
 #include <iostream>
+#include <cstdio> // for snprintf
+#ifdef _WIN32
+#include <objbase.h> // for CoCreateGuid
+#else
+#include <uuid/uuid.h> // for uuid_generate и uuid_unparse
+#endif
 
 namespace redis_utils {
 
@@ -47,7 +53,11 @@ redisContext* RedisConnect(const std::string& ip, const std::size_t port) {
 
 redisReply* RedisGetByKey(redisContext *redis_conn, const char* format, ...) {
     // Получение данных запроса из Redis
-    redisReply *reply = static_cast<redisReply*>(redisCommand(redis_conn, format));
+    va_list args;
+    va_start(args, format);
+    redisReply *reply = (redisReply*)redisvCommand(redis_conn, format, args);
+    va_end(args);
+
     if (reply == NULL || reply->type == REDIS_REPLY_NIL) {
         if (reply) {
             freeReplyObject(reply);
@@ -60,9 +70,8 @@ redisReply* RedisGetByKey(redisContext *redis_conn, const char* format, ...) {
 
 void RedisSaveVideoRequest(redisContext *redis_conn, const requests::VideoRequest& request) {
     redisCommand(redis_conn, "HMSET request:%s id %s path %s status %s", 
-                     request.id.c_str(), request.id.c_str(), request.path.c_str(), 
-                     requests::VideoStatusToString(request.status).c_str());
-    redisFree(redis_conn);
+                 request.id.c_str(), request.id.c_str(), request.path.c_str(), 
+                 requests::VideoStatusToString(request.status).c_str());
 }
 
 void RedisUpdateVideoStatus(redisContext *redis_conn, const std::string& key, requests::VideoStatus new_status) {
@@ -79,6 +88,17 @@ void RedisUpdateVideoStatus(redisContext *redis_conn, const std::string& key, re
     }
 
     freeReplyObject(reply);
+}
+
+void RedisSaveJsonResponse(redisContext *redis_conn, const std::string& key, const crow::json::wvalue& json_response) {
+    std::string json_str = json_response.dump();
+    redisCommand(redis_conn, "SET %s %s", key.c_str(), json_str.c_str());
+}
+
+void RedisSaveYoloResponse(redisContext *redis_conn, const std::string& id, const crow::json::wvalue& json_response) {
+    std::string json_str = json_response.dump();
+    std::string key = "yolo_response:" + id;
+    redisCommand(redis_conn, "SET %s %s", key.c_str(), json_str.c_str());
 }
 
 } // namespace redis_utils

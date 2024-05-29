@@ -8,9 +8,18 @@ namespace handlers {
 
 namespace {
 
-void OnYoloAnalyzeComplete(const crow::response& response) {
+void OnYoloAnalyzeComplete(const crow::response& response, utils::http::RequestsChain& chain, const std::string& id) {
     if (response.code == 200) {
-        std::cout << "YOLO analysis started successfully\n";
+        crow::json::wvalue save_body;
+        save_body["redis_id"] = id;
+        chain.AddRequest("127.0.0.1", "8083", "/save_video", save_body, [](const crow::response& res) {
+            if (res.code == 200) {
+                std::cout << "Video analysis saved successfully\n";
+            } else {
+                std::cout << "Failed to save video analysis\n";
+            }
+        });
+        chain.Execute();
     } else {
         std::cout << "Failed to start YOLO analysis\n";
     }
@@ -18,8 +27,12 @@ void OnYoloAnalyzeComplete(const crow::response& response) {
 
 void OnProcessVideoComplete(const crow::response& response, utils::http::RequestsChain& chain, const std::string& id) {
     if (response.code == 200) {
-        std::string frames_folder = "../../../tmp/frames/frames-" + id;
-        chain.AddRequest("127.0.0.1", "8082", "/yolo_analyze_frames", frames_folder, OnYoloAnalyzeComplete);
+        crow::json::wvalue yolo_body;
+        yolo_body["redis_id"] = id;
+        std::string frames_folder = std::filesystem::absolute("./frames-" + id).string();
+        yolo_body["frames_path"] = frames_folder;
+        chain.AddRequest("127.0.0.1", "8082", "/yolo_analyze_frames", yolo_body,
+            std::bind(OnYoloAnalyzeComplete, std::placeholders::_1, std::ref(chain), id));
         chain.Execute();
     } else {
         std::cout << "Failed to start video processing\n";

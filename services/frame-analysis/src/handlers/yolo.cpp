@@ -1,13 +1,16 @@
 #include "yolo.h"
-
 #include <iostream>
 #include <cstdlib>
 #include <array>
 #include <cstdio>
 #include <memory>
-#include <thread>
-#include <future>
-#include <crow.h>
+#include <filesystem>
+#include "../../../../utils/redis/redis.h"
+
+#ifdef _WIN32
+    #define popen _popen
+    #define pclose _pclose
+#endif
 
 namespace handlers {
 
@@ -17,7 +20,7 @@ std::string RunYoloScript(const std::string& folder_path) {
     std::string command = "python3 ../yolo/yolo_analyze.py " + folder_path;
     std::array<char, 128> buffer;
     std::string result;
-    std::shared_ptr<FILE> pipe(_popen(command.c_str(), "r"), _pclose);
+    std::shared_ptr<FILE> pipe(popen(command.c_str(), "r"), pclose);
     if (!pipe) throw std::runtime_error("popen() failed!");
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         result += buffer.data();
@@ -25,28 +28,38 @@ std::string RunYoloScript(const std::string& folder_path) {
     return result;
 }
 
-std::future<std::string> RunYoloScriptAsync(const std::string& folder_path) {
-    std::cout << "Running yolo script with folder_path=" << folder_path << std::endl;
-    return std::async(std::launch::async, RunYoloScript, folder_path);
-}
-
 } // namespace
 
 void BindYoloHandler(crow::SimpleApp& app) {
     CROW_ROUTE(app, "/yolo_analyze_frames").methods(crow::HTTPMethod::POST)
-    ([](const crow::request& req, crow::response& res) {
-        auto folder_path = req.body;
+    ([](const crow::request& req) {
+        auto body = crow::json::load(req.body);
+        if (!body) {
+            return crow::response(400, "Invalid JSON");
+        }
+
+        std::string redis_id = body["redis_id"].s();
+        std::string frames_path = body["frames_path"].s();
+
         try {
-            auto result_future = RunYoloScriptAsync(folder_path);
-            result_future.wait();
-            std::string result = result_future.get();
-            std::cout << "/yolo_analyze_frames finished with response=" << result << std::endl;
-            res.write(result);
-            res.end();
+            std::string result_str = RunYoloScript(frames_path);
+            auto result_json = crow::json::load(result_str);
+
+            // Connect to redis
+            redisContext *redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);
+            if (redis_conn == nullptr) {
+                return crow::response(500, "Redis connection error");
+            }
+
+            std::cout << "Finished YOLO analysis" << std::endl;
+
+            // Save YOLO result to redis
+            redis_utils::RedisSaveYoloResponse(redis_conn, redis_id, result_json);
+            redisFree(redis_conn);
+
+            return crow::response(200, result_str);
         } catch (const std::exception& e) {
-            res.code = 500;
-            res.write(e.what());
-            res.end();
+            return crow::response(500, e.what());
         }
     });
 }
