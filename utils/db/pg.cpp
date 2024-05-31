@@ -18,11 +18,11 @@ bool SaveAnalysisResult(const std::string& id, const crow::json::rvalue& analysi
         pqxx::work W(C);
 
         std::string query = "INSERT INTO analysis_results (id, result) VALUES (" +
-                            W.quote(id) + ", " + W.quote(analysis_result.dump()) + ");";
+                            W.quote(id) + ", " + W.quote(std::string(analysis_result)) + ");";
 
         W.exec(query);
         W.commit();
-        C.disconnect();
+        C.close();
         return true;
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
