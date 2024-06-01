@@ -19,6 +19,11 @@ set(ASIO_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../../deps/asio/asio/include")
 # Вывод сообщения с путем к Asio
 message(STATUS "ASIO_INCLUDE_DIR is set to ${ASIO_INCLUDE_DIR}")
 
+if (WIN32)
+    add_definitions(-D_WIN32_WINNT=0x0601)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lws2_32")
+endif()
+
 set(PostgreSQL_ADDITIONAL_VERSIONS "15.3")
 set(PostgreSQL_ROOT "D:/Program Files/PostgreSQL/15")
 set(PostgreSQL_LIBRARY_DIR "D:/Program Files/PostgreSQL/15/lib")
@@ -107,8 +112,13 @@ file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/*.h")
 
 add_executable(video_post_processing ${SOURCES})
 
-# Линковка библиотек
 target_link_libraries(video_post_processing PRIVATE ${crow_LIBRARIES} openssl_ready hiredis pqxx PostgreSQL::PostgreSQL)
+
+# Win32-specific definitions and link libraries
+if (WIN32)
+    add_definitions(-D_WIN32_WINNT=0x0601)
+    target_link_libraries(video_post_processing PRIVATE ws2_32)
+endif()
 
 # Копирование hiredisd.dll в директорию с исполняемым файлом (если необходимо)
 if (WIN32)
