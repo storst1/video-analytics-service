@@ -63,25 +63,32 @@ ExternalProject_Add(
     PREFIX ${CMAKE_BINARY_DIR}/openssl
     GIT_REPOSITORY https://github.com/openssl/openssl.git
     GIT_TAG OpenSSL_1_1_1-stable
-    CONFIGURE_COMMAND ./Configure --prefix=${CMAKE_BINARY_DIR}/openssl --openssldir=${CMAKE_BINARY_DIR}/openssl VC-WIN64A
-    BUILD_COMMAND nmake
-    INSTALL_COMMAND nmake install
+    CONFIGURE_COMMAND perl Configure VC-WIN64A --prefix=<INSTALL_DIR> --openssldir=<INSTALL_DIR>
+    BUILD_COMMAND cmake --build . --config Release
+    INSTALL_COMMAND cmake --install . --config Release
     BUILD_IN_SOURCE 1
+    LOG_CONFIGURE ON
+    LOG_BUILD ON
+    LOG_INSTALL ON
 )
 
-add_library(openssl STATIC IMPORTED)
-set_target_properties(openssl PROPERTIES
-    IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/openssl/lib/libssl.a
-    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_BINARY_DIR}/openssl/include
+# Переменные для путей OpenSSL
+set(OPENSSL_INCLUDE_DIR ${CMAKE_BINARY_DIR}/openssl/include)
+set(OPENSSL_CRYPTO_LIBRARY ${CMAKE_BINARY_DIR}/openssl/lib/libcrypto.a)
+
+# Создание фиктивной (заглушки) цели для OpenSSL
+add_custom_target(openssl_ready
+    DEPENDS openssl
 )
 
+# Импортируемую библиотеку crypto зависим от целевого объекта openssl_ready
 add_library(crypto STATIC IMPORTED)
 set_target_properties(crypto PROPERTIES
-    IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/openssl/lib/libcrypto.a
-    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_BINARY_DIR}/openssl/include
+    IMPORTED_LOCATION ${OPENSSL_CRYPTO_LIBRARY}
+    INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_INCLUDE_DIR}
 )
 
-add_dependencies(video_post_processing openssl)
+# add_dependencies(video_post_processing openssl_ready)
 
 # Установка пути к заголовочным файлам
 include_directories(${crow_SOURCE_DIR}/include)
@@ -92,6 +99,7 @@ include_directories(${CMAKE_SOURCE_DIR}/../utils/http)
 include_directories(${CMAKE_SOURCE_DIR}/../utils/db)
 include_directories(${hiredis_SOURCE_DIR})
 include_directories(${PostgreSQL_INCLUDE_DIR})
+include_directories(${OPENSSL_INCLUDE_DIR})
 
 # Добавление исходных файлов
 file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/*.cpp")
@@ -100,7 +108,7 @@ file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/*.h")
 add_executable(video_post_processing ${SOURCES})
 
 # Линковка библиотек
-target_link_libraries(video_post_processing PRIVATE ${crow_LIBRARIES} openssl crypto hiredis pqxx PostgreSQL::PostgreSQL)
+target_link_libraries(video_post_processing PRIVATE ${crow_LIBRARIES} openssl_ready hiredis pqxx PostgreSQL::PostgreSQL)
 
 # Копирование hiredisd.dll в директорию с исполняемым файлом (если необходимо)
 if (WIN32)
@@ -112,31 +120,8 @@ endif()
 
 # Копирование pqxx.dll в директорию с исполняемым файлом (если необходимо)
 if (WIN32)
-   add_custom_command(TARGET video_post_processing POST_BUILD
-       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-       "${CMAKE_SOURCE_DIR}/build/_deps/libpqxx-build/src/pqxx.dll"
-       $<TARGET_FILE_DIR:video_post_processing>)
-endif()
-
-# Копирование DLL файлов PostgreSQL и OpenSSL в директорию с исполняемым файлом
-if (WIN32)
     add_custom_command(TARGET video_post_processing POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${PostgreSQL_LIBRARY_DIR}/libpq.dll"
+        "${CMAKE_SOURCE_DIR}/build/_deps/libpqxx-build/src/pqxx.dll"
         $<TARGET_FILE_DIR:video_post_processing>)
-    add_custom_command(TARGET video_post_processing POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_BINARY_DIR}/openssl/bin/libssl-1_1-x64.dll"
-        $<TARGET_FILE_DIR:video_post_processing>)
-    add_custom_command(TARGET video_post_processing POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_BINARY_DIR}/openssl/bin/libcrypto-1_1-x64.dll"
-        $<TARGET_FILE_DIR:video_post_processing>)
-endif()
-
-# Определение _WIN32_WINNT
-if(MSVC)
-    add_definitions(-D_WIN32_WINNT=0x0A00)
-else()
-    add_definitions(-D_WIN32_WINNT=0x0601)
 endif()
