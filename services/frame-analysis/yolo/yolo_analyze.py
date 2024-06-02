@@ -12,6 +12,23 @@ weight_file = "yolov8n.pt"
 
 
 def analyze_frame(model, image_path):
+    """
+    Analyzes a frame using the specified model and returns the results in JSON format.
+
+    Args:
+        model: The model used for analysis.
+        image_path: The path to the image file to be analyzed.
+
+    Returns:
+        A list of dictionaries representing the analysis results in JSON format. Each dictionary contains the following keys:
+        - "file": The name of the image file.
+        - "boxes": A list of dictionaries representing the detected bounding boxes. Each dictionary contains the following keys:
+            - "box": The coordinates of the bounding box in the format [x_min, y_min, x_max, y_max].
+            - "class": The class label of the detected object.
+
+    Raises:
+        Any exception that occurs during the analysis process.
+    """
     result_json = []
     try:
         results = model(image_path)
@@ -63,12 +80,36 @@ def analyze_frame(model, image_path):
 
 
 async def analyze_frame_async(executor, model, image_path):
+    """
+    Asynchronously analyzes a frame using the specified model and image path.
+
+    Args:
+        executor (concurrent.futures.Executor): The executor to run the analysis in.
+        model: The model to use for analysis.
+        image_path (str): The path to the image to analyze.
+
+    Returns:
+        The result of the frame analysis.
+    """
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(executor, analyze_frame, model, image_path)
     return result
 
 
 async def analyze_frames(folder_path):
+    """
+    Analyzes frames in a given folder using the YOLO model.
+
+    Args:
+        folder_path (str): The path to the folder containing the frames.
+
+    Returns:
+        str: A JSON string representing the analysis results.
+
+    Raises:
+        Exception: If there is an error loading the model or analyzing the frames.
+
+    """
     try:
         model = YOLO(weight_file)
     except Exception as e:

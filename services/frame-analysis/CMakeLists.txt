@@ -1,22 +1,22 @@
 cmake_minimum_required(VERSION 3.10)
 project(frame_analysis)
 
-# Установка стандартов C++
+# Set C++ standards
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Включение генерации compile_commands.json
+# Enable generation of compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Определение пути к Asio относительно корневой директории проекта
+# Define the path to Asio relative to the project's root directory
 set(ASIO_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../../deps/asio/asio/include")
 
-# Вывод сообщения с путем к Asio
+# Print a message with the path to Asio
 message(STATUS "ASIO_INCLUDE_DIR is set to ${ASIO_INCLUDE_DIR}")
 
 include(FetchContent)
 
-# Загрузка и сборка Crow
+# Download and build Crow
 FetchContent_Declare(
     crow
     GIT_REPOSITORY https://github.com/CrowCpp/Crow.git
@@ -25,7 +25,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(crow)
 
-# Загрузка и сборка hiredis
+# Download and build hiredis
 FetchContent_Declare(
     hiredis
     GIT_REPOSITORY https://github.com/redis/hiredis.git
@@ -34,7 +34,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(hiredis)
 
-# Установка пути к заголовочным файлам
+# Set include paths
 include_directories(${crow_SOURCE_DIR}/include)
 include_directories(${ASIO_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/include)
@@ -42,16 +42,16 @@ include_directories(${hiredis_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/../utils/redis)
 include_directories(${CMAKE_SOURCE_DIR}/../utils/http)
 
-# Добавление исходных файлов
+# Add source files
 file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/http/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.h" "${CMAKE_SOURCE_DIR}/../../utils/http/*.h")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# Линковка библиотек (если есть необходимость в дополнительных библиотеках, добавьте их здесь)
+# Link libraries (add additional libraries here if needed)
 target_link_libraries(${PROJECT_NAME} ${crow_LIBRARIES} hiredis)
 
-# Копирование hiredisd.dll в директорию с исполняемым файлом
+# Copy hiredisd.dll to the directory with the executable file
 if (WIN32)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -59,7 +59,7 @@ if (WIN32)
         $<TARGET_FILE_DIR:${PROJECT_NAME}>)
 endif()
 
-# Установка флагов для NASM (если используется NASM)
+# Set flags for NASM (if NASM is used)
 if(NOT MSVC)
     set(CMAKE_ASM_NASM_OBJECT_FORMAT win64)
     set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -g cv8 -D__x86_64__")

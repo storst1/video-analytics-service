@@ -7,6 +7,8 @@
 
 namespace handlers {
 
+namespace fs = std::filesystem;
+
 namespace {
 
 /**

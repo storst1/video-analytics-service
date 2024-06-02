@@ -1,18 +1,29 @@
 #include "submit_video.h"
-#include "../../utils/http/requests_chain.h"
+
 #include <iostream>
+
 #include <asio.hpp>
+
+#include "../../utils/http/requests_chain.h"
 #include "../../utils/redis/redis.h"
 
 namespace handlers {
 
 namespace {
 
+/**
+ * Callback function called when YOLO analysis is complete.
+ * 
+ * @param response The response from the YOLO analysis request.
+ * @param chain The HTTP requests chain.
+ * @param id The ID of the video analysis.
+ */
 void OnYoloAnalyzeComplete(const crow::response& response, utils::http::RequestsChain& chain, const std::string& id) {
     if (response.code == 200) {
         crow::json::wvalue save_body;
         save_body["redis_id"] = id;
-        chain.AddRequest("127.0.0.1", "8083", "/save_video", save_body, [](const crow::response& res) {
+        chain.AddRequest("127.0.0.1", "8083", "/save_video", save_body, 
+[](const crow::response& res) {
             if (res.code == 200) {
                 std::cout << "Video analysis saved successfully\n";
             } else {
@@ -25,6 +36,13 @@ void OnYoloAnalyzeComplete(const crow::response& response, utils::http::Requests
     }
 }
 
+/**
+ * Callback function called when video processing is complete.
+ * 
+ * @param response The response object containing the result of the video processing.
+ * @param chain The HTTP requests chain object.
+ * @param id The ID of the video being processed.
+ */
 void OnProcessVideoComplete(const crow::response& response, utils::http::RequestsChain& chain, const std::string& id) {
     if (response.code == 200) {
         crow::json::wvalue yolo_body;
@@ -39,6 +57,12 @@ void OnProcessVideoComplete(const crow::response& response, utils::http::Request
     }
 }
 
+/**
+ * Handles the HTTP request for submitting a video.
+ * 
+ * @param req The HTTP request object.
+ * @param res The HTTP response object.
+ */
 void SubmitVideoHandler(const crow::request& req, crow::response& res) {
     auto video_path = req.body;
     std::string id = redis_utils::GenerateUUID();

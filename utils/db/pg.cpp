@@ -1,12 +1,21 @@
 #include "pg.h"
-#include <pqxx/pqxx>
+
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 
+#include <pqxx/pqxx>
+
 namespace utils {
 namespace db {
 
+/**
+ * Saves the analysis result to the database.
+ * 
+ * @param id The ID of the analysis result.
+ * @param analysis_result The analysis result to be saved.
+ * @return True if the analysis result is successfully saved, false otherwise.
+ */
 bool SaveAnalysisResult(const std::string& id, const crow::json::rvalue& analysis_result) {
     try {
         pqxx::connection C("dbname=yourdbname user=yourusername password=yourpassword hostaddr=127.0.0.1 port=5432");
@@ -30,6 +39,12 @@ bool SaveAnalysisResult(const std::string& id, const crow::json::rvalue& analysi
     }
 }
 
+/**
+ * Applies database migrations to the specified PostgreSQL database.
+ *
+ * @param connection_str The connection string for the PostgreSQL database.
+ * @param migrations_dir The directory containing the migration files.
+ */
 void ApplyMigrations(const std::string& connection_str, const std::string& migrations_dir) {
     try {
         pqxx::connection C(connection_str);

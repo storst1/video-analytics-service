@@ -4,6 +4,12 @@
 
 namespace handlers {
 
+/**
+ * Binds the status handler to the given Crow application.
+ * This handler retrieves the status of a request from Redis and returns it as a JSON response.
+ *
+ * @param app The Crow application to bind the handler to.
+ */
 void BindStatusHandler(crow::SimpleApp& app) {
     CROW_ROUTE(app, "/status/<string>")
     ([](const crow::request& req, std::string id){

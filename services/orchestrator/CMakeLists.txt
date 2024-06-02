@@ -2,17 +2,17 @@ cmake_minimum_required(VERSION 3.14)
 
 project(orchestrator)
 
-# Установка стандартов C++
+# Set C++ standards
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Включение генерации compile_commands.json
+# Enable generation of compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Определение пути к Asio относительно корневой директории проекта
+# Define the path to Asio relative to the project root directory
 set(ASIO_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../../deps/asio/asio/include")
 
-# Вывод сообщения с путем к Asio
+# Print a message with the path to Asio
 message(STATUS "ASIO_INCLUDE_DIR is set to ${ASIO_INCLUDE_DIR}")
 
 if (WIN32)
@@ -29,12 +29,12 @@ set(PostgreSQL_ROOT "${POSTGRESQL_USER_PATH}")
 set(PostgreSQL_LIBRARY_DIR "${POSTGRESQL_USER_PATH}/lib")
 set(PostgreSQL_INCLUDE_DIR "${POSTGRESQL_USER_PATH}/include")
 
-# Поиск локально установленного PostgreSQL
+# Find locally installed PostgreSQL
 find_package(PostgreSQL REQUIRED)
 
 include(FetchContent)
 
-# Загрузка и сборка Crow
+# Download and build Crow
 FetchContent_Declare(
     crow
     GIT_REPOSITORY https://github.com/CrowCpp/Crow.git
@@ -43,7 +43,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(crow)
 
-# Загрузка и сборка hiredis
+# Download and build hiredis
 FetchContent_Declare(
     hiredis
     GIT_REPOSITORY https://github.com/redis/hiredis.git
@@ -55,19 +55,19 @@ FetchContent_MakeAvailable(hiredis)
 message(STATUS "hiredis_SOURCE_DIR is set to ${hiredis_SOURCE_DIR}")
 message(STATUS "hiredis_BINARY_DIR is set to ${hiredis_BINARY_DIR}")
 
-# Установка путей к заголовочным файлам
+# Set include paths
 include_directories(${crow_SOURCE_DIR}/include)
 include_directories(${ASIO_INCLUDE_DIR})
 include_directories(${hiredis_SOURCE_DIR})
 include_directories(${PostgreSQL_INCLUDE_DIR})
 
-# Установка include-директории для всех исходных файлов
+# Set include directory for all source files
 include_directories(${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/http)
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/redis)
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/db)
 
-# Добавление исходных файлов
+# Add source files
 file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/*.h")
 
@@ -75,7 +75,7 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/../../deps/libpqxx build-pqxx)
 
-# Линковка библиотек
+# Link libraries
 target_link_libraries(${PROJECT_NAME} hiredis pqxx PostgreSQL::PostgreSQL)
 
 if (WIN32)
@@ -120,7 +120,7 @@ if (WIN32)
         $<TARGET_FILE_DIR:orchestrator>)
 endif()
 
-# Определение _WIN32_WINNT
+# Define _WIN32_WINNT
 if(MSVC)
     add_definitions(-D_WIN32_WINNT=0x0A00)
 else()

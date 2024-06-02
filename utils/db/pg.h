@@ -1,7 +1,8 @@
 #pragma once
 
-#include <crow/json.h>
 #include <string>
+
+#include <crow/json.h>
 
 namespace utils {
 namespace db {
