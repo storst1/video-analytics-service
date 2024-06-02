@@ -45,7 +45,7 @@ int GetVideoDuration(const std::string& video_path) {
 
     try {
         double duration = std::stod(result);
-        return static_cast<int>(duration);
+        return static_cast<int>(duration) + 1;
     } catch (const std::exception& e) {
         std::cerr << "Error: Failed to parse video duration" << std::endl;
         return -1;
@@ -163,10 +163,10 @@ void BindProcessVideoHandler(crow::SimpleApp& app) {
 
         redis_utils::RedisUpdateVideoStatus(redis_conn, redis_id, requests::VideoStatus::PreProcessingFrames);
 
-        const int video_duration = GetVideoDuration(video_path);
-        if (video_duration == -1) {
-            return crow::response(500, "Failed to get video duration");
-        }
+        // const int video_duration = GetVideoDuration(video_path);
+        // if (video_duration == -1) {
+        //    return crow::response(500, "Failed to get video duration");
+        // }
 
         // Create initial dir for frames
         fs::create_directory(output_path);
