@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdio>
 #include <memory>
+#include <regex>
 
 #include "../../../../utils/redis/redis.h"
 
@@ -16,6 +17,27 @@
 namespace handlers {
 
 namespace {
+
+/**
+ * Filters the output of a YOLO Python script by extracting the JSON portion.
+ * If the JSON portion is not found, an error message is returned.
+ * If the output is not enclosed in square brackets, it is wrapped in square brackets.
+ *
+ * @param output The output string to be filtered.
+ */
+void FilterYoloPyScriptOutput(std::string& output) {
+    std::regex json_regex(R"(\{.*\})", std::regex::extended);
+    std::smatch match;
+    if (std::regex_search(output, match, json_regex, std::regex_constants::match_any)) {
+        output = match.str();
+    } else {
+        output = "{\"Yolo analyze script error\": \"Failed to find JSON in the output\"}";
+    }
+
+    if (!output.empty() && output.front() != '[' && output.back() != ']') {
+        output = "[" + output + "]";
+    }
+}
 
 /**
  * Runs the YOLO script to analyze the frames in the specified folder.
@@ -59,7 +81,12 @@ void BindYoloHandler(crow::SimpleApp& app) {
 
         try {
             std::string result_str = RunYoloScript(frames_path);
-            auto result_json = crow::json::load(result_str);
+            FilterYoloPyScriptOutput(result_str);
+            const auto result_json = crow::json::load(result_str);
+            if (!result_json) {
+                std::cout << "Yolo response str: " << result_str << std::endl;
+                return crow::response(500, "Failed to parse YOLO result. Yolo response str:" + result_str);
+            }
 
             // Connect to redis
             redisContext *redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);

@@ -32,7 +32,7 @@ void OnYoloAnalyzeComplete(const crow::response& response, utils::http::Requests
         });
         chain.Execute();
     } else {
-        std::cout << "Failed to start YOLO analysis\n";
+        std::cout << "Failed to start or finish YOLO analysis\n" << ". Response.body: " << response.body << std::endl;
     }
 }
 
@@ -47,7 +47,7 @@ void OnProcessVideoComplete(const crow::response& response, utils::http::Request
     if (response.code == 200) {
         crow::json::wvalue yolo_body;
         yolo_body["redis_id"] = id;
-        std::string frames_folder = std::filesystem::absolute("./frames-" + id).string();
+        std::string frames_folder = std::filesystem::absolute("../../../tmp/frames/frames-" + id).string();
         yolo_body["frames_path"] = frames_folder;
         chain.AddRequest("127.0.0.1", "8082", "/yolo_analyze_frames", yolo_body,
             std::bind(OnYoloAnalyzeComplete, std::placeholders::_1, std::ref(chain), id));

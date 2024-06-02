@@ -2,12 +2,12 @@ import sys
 import json
 import os
 import asyncio
-import torch
-import yaml
+
 from concurrent.futures import ThreadPoolExecutor
 from ultralytics import YOLO
 
 
+# Load the configuration file
 weight_file = "yolov8n.pt"
 
 
@@ -31,14 +31,12 @@ def analyze_frame(model, image_path):
     """
     result_json = []
     try:
-        results = model(image_path)
+        results = model(image_path, verbose=False)
         for result in results:
             try:
-                print(f"Processing {image_path}: result type {type(result)}")
                 if hasattr(result, 'boxes'):
                     boxes = result.boxes
                     names = result.names
-                    print(f"Boxes: {boxes}")
                     if boxes.data.size(0) > 0:
                         box_data = boxes.xyxy.cpu().numpy().tolist()
                         cls_data = boxes.cls.cpu().numpy().tolist()
@@ -59,19 +57,16 @@ def analyze_frame(model, image_path):
                             "boxes": []
                         })
                 else:
-                    print(f"No boxes attribute in result for {image_path}")
                     result_json.append({
                         "file": os.path.basename(image_path),
                         "boxes": []
                     })
             except Exception as e:
-                print(f"Error processing {image_path}: {str(e)}")
                 result_json.append({
                     "file": os.path.basename(image_path),
                     "boxes": []
                 })
     except Exception as e:
-        print(f"Error processing {image_path}: {str(e)}")
         result_json.append({
             "file": os.path.basename(image_path),
             "boxes": []
@@ -108,7 +103,6 @@ async def analyze_frames(folder_path):
 
     Raises:
         Exception: If there is an error loading the model or analyzing the frames.
-
     """
     try:
         model = YOLO(weight_file)

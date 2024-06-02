@@ -72,7 +72,7 @@ redisContext* RedisConnect(const std::string& ip, const std::size_t port) {
  * @return A pointer to the Redis reply containing the requested data, or nullptr if the reply is NULL or empty.
  */
 redisReply* RedisGetByKey(redisContext *redis_conn, const char* format, ...) {
-    // Получение данных запроса из Redis
+    // Get request from Redis
     va_list args;
     va_start(args, format);
     redisReply *reply = (redisReply*)redisvCommand(redis_conn, format, args);
