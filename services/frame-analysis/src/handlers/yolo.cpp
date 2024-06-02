@@ -16,12 +16,21 @@ namespace handlers {
 
 namespace {
 
+/**
+ * Runs the YOLO script to analyze the frames in the specified folder.
+ * 
+ * @param folder_path The path to the folder containing the frames.
+ * @return A string containing the result of the YOLO script execution.
+ * @throws std::runtime_error if the popen() function fails.
+ */
 std::string RunYoloScript(const std::string& folder_path) {
     std::string command = "python3 ../yolo/yolo_analyze.py " + folder_path;
     std::array<char, 128> buffer;
     std::string result;
     std::shared_ptr<FILE> pipe(popen(command.c_str(), "r"), pclose);
-    if (!pipe) throw std::runtime_error("popen() failed!");
+    if (!pipe) {
+        throw std::runtime_error("popen() failed!");
+    }
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         result += buffer.data();
     }
@@ -30,6 +39,12 @@ std::string RunYoloScript(const std::string& folder_path) {
 
 } // namespace
 
+/**
+ * Binds the YOLO handler to the specified Crow application.
+ * The YOLO handler analyzes frames using the YOLO algorithm and saves the result to Redis.
+ * 
+ * @param app The Crow application to bind the handler to.
+ */
 void BindYoloHandler(crow::SimpleApp& app) {
     CROW_ROUTE(app, "/yolo_analyze_frames").methods(crow::HTTPMethod::POST)
     ([](const crow::request& req) {

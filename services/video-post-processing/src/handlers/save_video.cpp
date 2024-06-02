@@ -4,6 +4,19 @@
 
 namespace handlers {
 
+namespace {
+
+/**
+ * @brief Handles the request to save video data.
+ * 
+ * This function is responsible for handling the request to save video data. It receives a JSON payload
+ * containing the Redis ID of the video and the YOLO result. It connects to Redis, retrieves the YOLO result
+ * using the Redis ID, parses the result, and saves it to PostgreSQL. Finally, it deletes the data from Redis
+ * and sends a response indicating the success or failure of the operation.
+ * 
+ * @param req The HTTP request object.
+ * @param res The HTTP response object.
+ */
 void SaveVideoHandler(const crow::request& req, crow::response& res) {
     auto body = crow::json::load(req.body);
     if (!body) {
@@ -53,6 +66,8 @@ void SaveVideoHandler(const crow::request& req, crow::response& res) {
     res.code = 200;
     res.write("Data saved successfully");
     res.end();
+}
+
 }
 
 void BindSaveVideoHandler(crow::SimpleApp& app) {
