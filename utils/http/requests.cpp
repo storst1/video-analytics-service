@@ -31,8 +31,43 @@ std::string VideoStatusToString(const VideoStatus& status) {
         return "Finished";
     case VideoStatus::Failed:
         return "Failed";
+    case VideoStatus::Stopped:
+        return "Stopped";
     default:
         throw std::exception("Unknown VideoStatus at VideoStatusToString()");
+    }
+}
+
+/**
+ * Converts a string representation of VideoStatus to its corresponding enum value.
+ * 
+ * @param statusStr The string representation of VideoStatus to convert.
+ * @return The VideoStatus enum value.
+ * @throws std::exception if the string representation is unknown.
+ */
+VideoStatus StringToVideoStatus(const std::string& statusStr) {
+    if (statusStr == "Received") {
+        return VideoStatus::Received;
+    } else if (statusStr == "PreProcessingFrames") {
+        return VideoStatus::PreProcessingFrames;
+    } else if (statusStr == "PreProcessingResize") {
+        return VideoStatus::PreProcessingResize;
+    } else if (statusStr == "YoloStarted") {
+        return VideoStatus::YoloStarted;
+    } else if (statusStr == "YoloFinished") {
+        return VideoStatus::YoloFinished;
+    } else if (statusStr == "FramesCleanUp") {
+        return VideoStatus::FramesCleanUp;
+    } else if (statusStr == "PostProcessing") {
+        return VideoStatus::PostProcessing;
+    } else if (statusStr == "Finished") {
+        return VideoStatus::Finished;
+    } else if (statusStr == "Failed") {
+        return VideoStatus::Failed;
+    } else if (statusStr == "Stopped") {
+        return VideoStatus::Stopped;
+    } else {
+        throw std::exception("Unknown string representation at StringToVideoStatus()");
     }
 }
 

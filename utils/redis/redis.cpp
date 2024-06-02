@@ -105,6 +105,7 @@ void RedisSaveVideoRequest(redisContext *redis_conn, const requests::VideoReques
  *
  * This function updates the status of a video in Redis by executing an HSET command.
  * The video status is stored as a string in the Redis hash with the specified key.
+ * The status is updated only if the current status is not VideoStatus::Stopped.
  *
  * @param redis_conn A pointer to the Redis connection.
  * @param key The key of the Redis hash where the video status is stored.
@@ -113,6 +114,19 @@ void RedisSaveVideoRequest(redisContext *redis_conn, const requests::VideoReques
 void RedisUpdateVideoStatus(redisContext *redis_conn, const std::string& key, requests::VideoStatus new_status) {
     if (redis_conn == nullptr) {
         std::cerr << "Redis connection is null" << std::endl;
+        return;
+    }
+
+    // Get the current status from Redis
+    std::optional<requests::VideoStatus> current_status = RedisGetRequestVideoStatus(redis_conn, key);
+    if (!current_status) {
+        std::cerr << "Failed to get current status from Redis" << std::endl;
+        return;
+    }
+
+    // Check if the current status is VideoStatus::Stopped
+    if (*current_status == requests::VideoStatus::Stopped) {
+        std::cout << "Cannot update status. Current status is VideoStatus::Stopped" << std::endl;
         return;
     }
 
@@ -151,6 +165,35 @@ void RedisSaveYoloResponse(redisContext *redis_conn, const std::string& id, cons
     std::string json_str = json_response.dump();
     std::string key = "yolo_response:" + id;
     redisCommand(redis_conn, "SET %s %s", key.c_str(), json_str.c_str());
+}
+
+/**
+ * Retrieves the status of a video request from Redis.
+ *
+ * @param redis_conn A pointer to the Redis connection.
+ * @param key The key of the Redis hash where the video request is stored.
+ * @return The status of the video request, or an empty string if the request is not found or an error occurs.
+ */
+std::optional<requests::VideoStatus> RedisGetRequestVideoStatus(redisContext *redis_conn, const std::string& key) {
+    if (redis_conn == nullptr) {
+        std::cerr << "Redis connection is null" << std::endl;
+        return std::nullopt;
+    }
+
+    const std::string command = "HGET request:" + key + " status";
+    redisReply *reply = static_cast<redisReply*>(redisCommand(redis_conn, command.c_str()));
+    if (reply == nullptr) {
+        std::cerr << "Failed to execute command: " << command << std::endl;
+        return std::nullopt;
+    }
+
+    std::string status;
+    if (reply->type == REDIS_REPLY_STRING) {
+        status = reply->str;
+    }
+
+    freeReplyObject(reply);
+    return requests::StringToVideoStatus(status);
 }
 
 } // namespace redis_utils

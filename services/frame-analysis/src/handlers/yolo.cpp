@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <memory>
 #include <regex>
+#include <filesystem>
 
 #include "../../../../utils/redis/redis.h"
 
@@ -60,6 +61,47 @@ std::string RunYoloScript(const std::string& folder_path) {
     return result;
 }
 
+/**
+ * Runs the YOLO script in all subdirectories of the specified folder.
+ * 
+ * @param folder_path The path to the folder containing the subdirectories.
+ * @param video_id The ID of the video.
+ * @return An optional string containing the merged result of running the YOLO script in all subdirectories,
+ *         or std::nullopt if the video status is not YoloStarted or if an error occurs.
+ */
+std::optional<std::string> RunYoloScriptInSubdirectories(const std::string& folder_path, 
+                                                         const std::string& video_id,
+                                                         redisContext *redis_conn) {
+    std::string merged_result;
+    const std::string command_prefix = "python3 ../yolo/yolo_analyze.py ";
+
+    // Get the list of subdirectories in the specified folder
+    std::vector<std::string> subdirectories;
+    for (const auto& entry : std::filesystem::directory_iterator(folder_path)) {
+        if (entry.is_directory()) {
+            subdirectories.push_back(entry.path().string());
+        }
+    }
+
+    // Iterate over each subdirectory and run the YOLO script
+    for (const auto& subdirectory : subdirectories) {
+        std::string subdirectory_path = folder_path + "/" + subdirectory;
+
+        // Check video status before running YOLO script
+        const auto status_opt = redis_utils::RedisGetRequestVideoStatus(redis_conn, video_id);
+        if (!status_opt.has_value() || status_opt.value() != requests::VideoStatus::YoloStarted) {
+            return std::nullopt;
+        }
+
+        const std::string result = RunYoloScript(subdirectory_path);
+
+        // Merge the result with the previous results
+        merged_result += result;
+    }
+
+    return merged_result;
+}
+
 } // namespace
 
 /**
@@ -79,19 +121,25 @@ void BindYoloHandler(crow::SimpleApp& app) {
         std::string redis_id = body["redis_id"].s();
         std::string frames_path = body["frames_path"].s();
 
+        redisContext *redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);
+        if (redis_conn == nullptr) {
+            return crow::response(500, "Redis connection error");
+        }
+        redis_utils::RedisUpdateVideoStatus(redis_conn, redis_id, requests::VideoStatus::YoloStarted);
+
         try {
-            std::string result_str = RunYoloScript(frames_path);
+            auto result_str_opt = RunYoloScriptInSubdirectories(frames_path, redis_id, redis_conn);
+            if (!result_str_opt.has_value()) {
+                return crow::response(500, "Failed to run YOLO script");
+            }
+
+            auto& result_str = result_str_opt.value();
             FilterYoloPyScriptOutput(result_str);
+
             const auto result_json = crow::json::load(result_str);
             if (!result_json) {
                 std::cout << "Yolo response str: " << result_str << std::endl;
                 return crow::response(500, "Failed to parse YOLO result. Yolo response str:" + result_str);
-            }
-
-            // Connect to redis
-            redisContext *redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);
-            if (redis_conn == nullptr) {
-                return crow::response(500, "Redis connection error");
             }
 
             std::cout << "Finished YOLO analysis" << std::endl;
@@ -99,6 +147,8 @@ void BindYoloHandler(crow::SimpleApp& app) {
             // Save YOLO result to redis
             redis_utils::RedisSaveYoloResponse(redis_conn, redis_id, result_json);
             redisFree(redis_conn);
+
+            redis_utils::RedisUpdateVideoStatus(redis_conn, redis_id, requests::VideoStatus::YoloFinished);
 
             return crow::response(200, result_str);
         } catch (const std::exception& e) {

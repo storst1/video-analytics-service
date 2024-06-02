@@ -13,7 +13,8 @@ enum class VideoStatus {
     FramesCleanUp = 6,
     PostProcessing = 7,
     Finished = 8,
-    Failed = 9
+    Failed = 9,
+    Stopped = 10
 };
 
 struct VideoRequest {
@@ -23,5 +24,6 @@ struct VideoRequest {
 };
 
 std::string VideoStatusToString(const VideoStatus& status);
+VideoStatus StringToVideoStatus(const std::string& statusStr);
 
 } // namespace requests

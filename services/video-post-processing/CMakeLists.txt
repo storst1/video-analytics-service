@@ -2,21 +2,21 @@ cmake_minimum_required(VERSION 3.14)
 
 project(video_post_processing)
 
-# Установка политик
+# Set policies
 cmake_policy(SET CMP0002 NEW)
 cmake_policy(SET CMP0079 NEW)
 
-# Установка стандартов C++
+# Set C++ standards
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Включение генерации compile_commands.json
+# Enable generation of compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Определение пути к Asio относительно корневой директории проекта
+# Define the path to Asio relative to the project root directory
 set(ASIO_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../../deps/asio/asio/include")
 
-# Вывод сообщения с путем к Asio
+# Print a message with the path to Asio
 message(STATUS "ASIO_INCLUDE_DIR is set to ${ASIO_INCLUDE_DIR}")
 
 if (WIN32)
@@ -33,12 +33,12 @@ set(PostgreSQL_ROOT "${POSTGRESQL_USER_PATH}")
 set(PostgreSQL_LIBRARY_DIR "${POSTGRESQL_USER_PATH}/lib")
 set(PostgreSQL_INCLUDE_DIR "${POSTGRESQL_USER_PATH}/include")
 
-# Поиск локально установленного PostgreSQL
+# Find locally installed PostgreSQL
 find_package(PostgreSQL REQUIRED)
 
 include(FetchContent)
 
-# Загрузка и сборка Crow
+# Download and build Crow
 FetchContent_Declare(
     crow
     GIT_REPOSITORY https://github.com/CrowCpp/Crow.git
@@ -47,7 +47,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(crow)
 
-# Загрузка и сборка hiredis
+# Download and build hiredis
 FetchContent_Declare(
     hiredis
     GIT_REPOSITORY https://github.com/redis/hiredis.git
@@ -56,7 +56,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(hiredis)
 
-# Установка пути к заголовочным файлам
+# Set include paths
 include_directories(${crow_SOURCE_DIR}/include)
 include_directories(${ASIO_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/redis)
@@ -65,7 +65,7 @@ include_directories(${CMAKE_SOURCE_DIR}/../../utils/db)
 include_directories(${hiredis_SOURCE_DIR})
 include_directories(${PostgreSQL_INCLUDE_DIR})
 
-# Добавление исходных файлов
+# Add source files
 file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/*.h")
 

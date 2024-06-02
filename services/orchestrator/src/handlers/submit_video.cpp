@@ -33,6 +33,11 @@ void OnYoloAnalyzeComplete(const crow::response& response, utils::http::Requests
         chain.Execute();
     } else {
         std::cout << "Failed to start or finish YOLO analysis\n" << ". Response.body: " << response.body << std::endl;
+        redisContext *redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);
+        if (redis_conn == nullptr) {
+            return;
+        }
+        redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Failed);
     }
 }
 
@@ -54,6 +59,11 @@ void OnProcessVideoComplete(const crow::response& response, utils::http::Request
         chain.Execute();
     } else {
         std::cout << "Failed to start video processing\n";
+        redisContext *redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);
+        if (redis_conn == nullptr) {
+            return;
+        }
+        redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Failed);
     }
 }
 

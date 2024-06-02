@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <optional>
 
 #include <hiredis.h>
 #include <crow.h>
@@ -29,5 +30,7 @@ void RedisUpdateVideoStatus(redisContext *redis_conn, const std::string& key, re
 void RedisSaveJsonResponse(redisContext *redis_conn, const std::string& key, const crow::json::wvalue& json_response);
 
 void RedisSaveYoloResponse(redisContext *redis_conn, const std::string& id, const crow::json::wvalue& json_response);
+
+std::optional<requests::VideoStatus> RedisGetRequestVideoStatus(redisContext *redis_conn, const std::string& key);
 
 } // namespace redis_utils
