@@ -4,6 +4,7 @@
 
 #include "../../../../utils/redis/redis.h"
 #include "../../../../utils/db/pg.h"
+#include "../../../../utils/cfg/global_config.h"
 
 namespace handlers {
 
@@ -32,7 +33,9 @@ void SaveVideoHandler(const crow::request& req, crow::response& res) {
     std::string redis_id = body["redis_id"].s();
 
     // Connect to Redis
-    redisContext *redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);
+    const auto& config = cfg::GlobalConfig::getInstance();
+    const auto& redis = config.getRedis();
+    redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
     if (redis_conn == nullptr) {
         res.code = 500;
         res.write("Redis connection error");

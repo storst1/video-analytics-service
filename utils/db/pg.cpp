@@ -6,6 +6,8 @@
 
 #include <pqxx/pqxx>
 
+#include "../cfg/global_config.h"
+
 namespace utils {
 namespace db {
 
@@ -18,7 +20,9 @@ namespace db {
  */
 bool SaveAnalysisResult(const std::string& id, const crow::json::rvalue& analysis_result) {
     try {
-        pqxx::connection C("dbname=yourdbname user=yourusername password=yourpassword hostaddr=127.0.0.1 port=5432");
+        const auto& config = cfg::GlobalConfig::getInstance();
+        const auto& pg_db = config.getPgDatabaseConfig();
+        pqxx::connection C(pg_db.getConnectionString());
         if (!C.is_open()) {
             std::cerr << "Can't open database" << std::endl;
             return false;

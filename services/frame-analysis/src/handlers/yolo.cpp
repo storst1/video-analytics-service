@@ -9,6 +9,7 @@
 #include <filesystem>
 
 #include "../../../../utils/redis/redis.h"
+#include "../../../../utils/cfg/global_config.h"
 
 #ifdef _WIN32
     #define popen _popen
@@ -118,10 +119,12 @@ void BindYoloHandler(crow::SimpleApp& app) {
             return crow::response(400, "Invalid JSON");
         }
 
-        std::string redis_id = body["redis_id"].s();
-        std::string frames_path = body["frames_path"].s();
+        const std::string redis_id = body["redis_id"].s();
+        const std::string frames_path = body["frames_path"].s();
 
-        redisContext *redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);
+        const auto& config = cfg::GlobalConfig::getInstance();
+        const auto& redis = config.getRedis();
+        redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
         if (redis_conn == nullptr) {
             return crow::response(500, "Redis connection error");
         }

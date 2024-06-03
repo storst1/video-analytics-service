@@ -6,6 +6,7 @@
 #include <string>
 
 #include "../../../../utils/redis/redis.h"
+#include "../../../../utils/cfg/global_config.h"
 
 
 #ifdef _WIN32
@@ -149,8 +150,10 @@ void BindProcessVideoHandler(crow::SimpleApp& app) {
         const std::string video_path = body["video_path"].s();
         const std::string redis_id = body["redis_id"].s();
         const std::string output_path = "../../../tmp/frames/frames-" + redis_id;
-
-        auto redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);
+        
+        const auto& config = cfg::GlobalConfig::getInstance();
+        const auto& redis = config.getRedis();
+        auto redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
 
         const auto status_opt = redis_utils::RedisGetRequestVideoStatus(redis_conn, redis_id);
         if (!status_opt.has_value()) {

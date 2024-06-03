@@ -1,0 +1,22 @@
+{
+    "redis": {
+        "host": "127.0.0.1",
+        "port": 6379
+    },
+    "orchestrator": {
+        "host": "127.0.0.1",
+        "port": 8080
+    },
+    "video-pre-processing": {
+        "host": "127.0.0.1",
+        "port": 8081
+    },
+    "frame-analytics": {
+        "host": "127.0.0.1",
+        "port": 8082
+    },
+    "vide-post-processing": {
+        "host": "127.0.0.1",
+        "port": 8083
+    }
+}

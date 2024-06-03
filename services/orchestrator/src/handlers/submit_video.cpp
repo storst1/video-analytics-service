@@ -6,6 +6,7 @@
 
 #include "../../utils/http/requests_chain.h"
 #include "../../utils/redis/redis.h"
+#include "../../utils/cfg/global_config.h"
 
 namespace handlers {
 
@@ -22,7 +23,9 @@ void OnYoloAnalyzeComplete(const crow::response& response, utils::http::Requests
     if (response.code == 200) {
         crow::json::wvalue save_body;
         save_body["redis_id"] = id;
-        chain.AddRequest("127.0.0.1", "8083", "/save_video", save_body, 
+        const auto& config = cfg::GlobalConfig::getInstance();
+        const auto& video_post = config.getVideoPostProcessing();
+        chain.AddRequest(video_post.host, std::to_string(video_post.port), "/save_video", save_body, 
 [](const crow::response& res) {
             if (res.code == 200) {
                 std::cout << "Video analysis saved successfully\n";
@@ -33,7 +36,9 @@ void OnYoloAnalyzeComplete(const crow::response& response, utils::http::Requests
         chain.Execute();
     } else {
         std::cout << "Failed to start or finish YOLO analysis\n" << ". Response.body: " << response.body << std::endl;
-        redisContext *redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);
+        const auto& config = cfg::GlobalConfig::getInstance();
+        const auto& redis = config.getRedis();
+        redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
         if (redis_conn == nullptr) {
             return;
         }
@@ -54,12 +59,16 @@ void OnProcessVideoComplete(const crow::response& response, utils::http::Request
         yolo_body["redis_id"] = id;
         std::string frames_folder = std::filesystem::absolute("../../../tmp/frames/frames-" + id).string();
         yolo_body["frames_path"] = frames_folder;
-        chain.AddRequest("127.0.0.1", "8082", "/yolo_analyze_frames", yolo_body,
+        const auto& config = cfg::GlobalConfig::getInstance();
+        const auto& frame_analytics = config.getFrameAnalytics();
+        chain.AddRequest(frame_analytics.host, std::to_string(frame_analytics.port), "/yolo_analyze_frames", yolo_body,
             std::bind(OnYoloAnalyzeComplete, std::placeholders::_1, std::ref(chain), id));
         chain.Execute();
     } else {
         std::cout << "Failed to start video processing\n";
-        redisContext *redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);
+        const auto& config = cfg::GlobalConfig::getInstance();
+        const auto& redis = config.getRedis();
+        redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
         if (redis_conn == nullptr) {
             return;
         }
@@ -79,7 +88,9 @@ void SubmitVideoHandler(const crow::request& req, crow::response& res) {
     requests::VideoRequest video_request = {id, video_path, requests::VideoStatus::Received};
 
     // Connect to redis
-    redisContext *redis_conn = redis_utils::RedisConnect("127.0.0.1", 6379);
+    const auto& config = cfg::GlobalConfig::getInstance();
+    const auto& redis = config.getRedis();
+    redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
     if (redis_conn == nullptr) {
         res.code = 500;
         res.write("Redis connection error");
@@ -97,10 +108,12 @@ void SubmitVideoHandler(const crow::request& req, crow::response& res) {
     crow::json::wvalue body;
     body["redis_id"] = id;
     body["video_path"] = video_path;
-    chain.AddRequest("127.0.0.1", "8081", "/process_video", body, 
-        [&chain, id](const crow::response& response) {
-            OnProcessVideoComplete(response, chain, id);
-        });
+
+    const auto& pre_processing = config.getVideoPreProcessing();
+    chain.AddRequest(pre_processing.host, std::to_string(pre_processing.port), "/process_video", body,
+    [&chain, id](const crow::response& response) {
+        OnProcessVideoComplete(response, chain, id);
+    });
     chain.Execute();
 
     res.code = 200;
