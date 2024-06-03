@@ -1,5 +1,12 @@
 #include "global_config.h"
 
+#include <sstream>
+#include <fstream>
+#include <exception>
+#include <iostream>
+
+#include <crow/json.h>
+
 namespace cfg {
 
 std::string GlobalConfig::DatabaseConfig::getConnectionString() const {
@@ -11,24 +18,40 @@ void GlobalConfig::loadConfig(const std::string& configFile) {
     std::ifstream file(configFile);
     if (file.is_open()) {
         try {
-            crow::json::rvalue configData;
-            file >> configData;
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            auto json_str = buffer.str();
+            auto configData = crow::json::load(json_str);
+            if (!configData) {
+                throw std::runtime_error("Invalid JSON in config file");
+            }
 
-            crow::json::rvalue orchestratorData = configData["orchestrator"];
+            auto orchestratorData = configData["orchestrator"];
             orchestrator.host = orchestratorData["host"].s();
             orchestrator.port = orchestratorData["port"].i();
 
-            crow::json::rvalue frameAnalyticsData = configData["frame_analytics"];
+            auto frameAnalyticsData = configData["frame_analytics"];
             frame_analytics.host = frameAnalyticsData["host"].s();
             frame_analytics.port = frameAnalyticsData["port"].i();
 
-            crow::json::rvalue videoPreProcessingData = configData["video_pre_processing"];
+            auto videoPreProcessingData = configData["video_pre_processing"];
             video_pre_processing.host = videoPreProcessingData["host"].s();
             video_pre_processing.port = videoPreProcessingData["port"].i();
 
-            crow::json::rvalue videoPostProcessingData = configData["video_post_processing"];
+            auto videoPostProcessingData = configData["video_post_processing"];
             video_post_processing.host = videoPostProcessingData["host"].s();
             video_post_processing.port = videoPostProcessingData["port"].i();
+
+            auto redisData = configData["redis"];
+            redis.host = redisData["host"].s();
+            redis.port = redisData["port"].i();
+
+            auto pgDbData = configData["pg_db"];
+            pg_db.dbname = pgDbData["database"].s();
+            pg_db.user = pgDbData["user"].s();
+            pg_db.password = pgDbData["password"].s();
+            pg_db.hostaddr = pgDbData["host"].s();
+            pg_db.port = pgDbData["port"].i();
         } catch (const std::exception& e) {
             std::cerr << "Error parsing config file: " << e.what() << std::endl;
         }

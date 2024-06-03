@@ -7,7 +7,7 @@
 
 int main()
 {
-    tasks::RunMigrations("");
+    tasks::RunMigrations();
 
     crow::SimpleApp app;
 

@@ -66,6 +66,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/http)
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/redis)
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/db)
+include_directories(${CMAKE_SOURCE_DIR}/../../utils/cfg)
 
 # Add source files
 file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/*.cpp")

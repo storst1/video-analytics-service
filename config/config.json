@@ -18,5 +18,12 @@
     "vide-post-processing": {
         "host": "127.0.0.1",
         "port": 8083
+    },
+    "pg": {
+        "host": "127.0.0.1",
+        "port": 5432,
+        "database": "video-analytics-service",
+        "user": "postgres",
+        "password": "password"
     }
 }

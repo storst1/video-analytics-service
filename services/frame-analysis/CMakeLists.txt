@@ -41,10 +41,13 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${hiredis_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/../utils/redis)
 include_directories(${CMAKE_SOURCE_DIR}/../utils/http)
+include_directories(${CMAKE_SOURCE_DIR}/../../utils/cfg)
 
 # Add source files
-file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/http/*.cpp")
-file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.h" "${CMAKE_SOURCE_DIR}/../../utils/http/*.h")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.cpp" 
+                          "${CMAKE_SOURCE_DIR}/../../utils/http/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/cfg/*.cpp" )
+file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.h" 
+                          "${CMAKE_SOURCE_DIR}/../../utils/http/*.h" "${CMAKE_SOURCE_DIR}/../../utils/cfg/*.h" )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 

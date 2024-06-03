@@ -40,6 +40,7 @@ include_directories(${ASIO_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/redis)
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/http)
+include_directories(${CMAKE_SOURCE_DIR}/../../utils/cfg)
 
 # Define the path to the FFmpeg executables
 if(WIN32)
@@ -55,8 +56,10 @@ message(STATUS "FFMPEG_EXECUTABLE is set to ${FFMPEG_EXECUTABLE}")
 add_definitions(-DFFMPEG_EXECUTABLE=\"${FFMPEG_EXECUTABLE}\")
 
 # Set the source files
-file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/http/*.cpp")
-file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.h" "${CMAKE_SOURCE_DIR}/../../utils/http/*.h")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.cpp" 
+                          "${CMAKE_SOURCE_DIR}/../../utils/http/*.cpp" "${CMAKE_SOURCE_DIR}/../../utils/cfg/*.cpp" )
+file(GLOB_RECURSE HEADERS "include/*.h" "${CMAKE_SOURCE_DIR}/../../utils/redis/*.h" 
+                          "${CMAKE_SOURCE_DIR}/../../utils/http/*.h" "${CMAKE_SOURCE_DIR}/../../utils/cfg/*.h" )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 

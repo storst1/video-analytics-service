@@ -11,8 +11,10 @@ namespace tasks {
 void RunMigrations() {
     const auto& config = cfg::GlobalConfig::getInstance();
     const auto& pg_db = config.getPgDatabaseConfig();
+
     const std::string connection_str = pg_db.getConnectionString();
     const std::string migrations_dir = "../../../migrations";
+    
     utils::db::ApplyMigrations(connection_str, migrations_dir);
 }
 

@@ -62,6 +62,7 @@ include_directories(${ASIO_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/redis)
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/http)
 include_directories(${CMAKE_SOURCE_DIR}/../../utils/db)
+include_directories(${CMAKE_SOURCE_DIR}/../../utils/cfg)
 include_directories(${hiredis_SOURCE_DIR})
 include_directories(${PostgreSQL_INCLUDE_DIR})
 
