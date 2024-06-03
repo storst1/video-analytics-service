@@ -24,7 +24,7 @@ public:
     };
 
     static GlobalConfig& getInstance();
-    void loadConfig(const std::string& configFile);
+    void loadConfig(const std::string& configFile, const bool log_parsing = false);
 
     const ServiceData& getOrchestrator() const;
     const ServiceData& getFrameAnalytics() const;

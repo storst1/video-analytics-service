@@ -87,15 +87,13 @@ std::optional<std::string> RunYoloScriptInSubdirectories(const std::string& fold
 
     // Iterate over each subdirectory and run the YOLO script
     for (const auto& subdirectory : subdirectories) {
-        std::string subdirectory_path = folder_path + "/" + subdirectory;
-
         // Check video status before running YOLO script
         const auto status_opt = redis_utils::RedisGetRequestVideoStatus(redis_conn, video_id);
         if (!status_opt.has_value() || status_opt.value() != requests::VideoStatus::YoloStarted) {
             return std::nullopt;
         }
 
-        const std::string result = RunYoloScript(subdirectory_path);
+        const std::string result = RunYoloScript(subdirectory);
 
         // Merge the result with the previous results
         merged_result += result;

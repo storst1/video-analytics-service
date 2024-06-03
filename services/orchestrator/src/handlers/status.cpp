@@ -7,12 +7,11 @@ namespace handlers {
 
 /**
  * Binds the status handler to the given Crow application.
- * This handler retrieves the status of a request from Redis and returns it as a JSON response.
  *
- * @param app The Crow application to bind the handler to.
+ * @param app The Crow application to bind the status handler to.
  */
 void BindStatusHandler(crow::SimpleApp& app) {
-    CROW_ROUTE(app, "/status/<string>")
+    CROW_ROUTE(app, "/status/<string>").methods(crow::HTTPMethod::GET)
     ([](const crow::request& req, std::string id){
         const auto& config = cfg::GlobalConfig::getInstance();
         const auto& redis = config.getRedis();
@@ -21,9 +20,14 @@ void BindStatusHandler(crow::SimpleApp& app) {
             return crow::response(500, "Redis connection error");
         }
 
+        const auto i = id.find("request:");
+        if (i != std::string::npos) {
+            id = id.substr(i + 8); // 8 is the length of "request:"
+        }
+
         redisReply *reply = redis_utils::RedisGetByKey(redis_conn, "HGETALL request:%s", id.c_str());
         if (reply == nullptr) {
-            return crow::response(404, "Request not found");
+            return crow::response(404, "Video not found");
         }
 
         crow::json::wvalue response;

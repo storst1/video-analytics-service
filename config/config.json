@@ -1,8 +1,4 @@
 {
-    "redis": {
-        "host": "127.0.0.1",
-        "port": 6379
-    },
     "orchestrator": {
         "host": "127.0.0.1",
         "port": 8080
@@ -15,9 +11,13 @@
         "host": "127.0.0.1",
         "port": 8082
     },
-    "vide-post-processing": {
+    "video-post-processing": {
         "host": "127.0.0.1",
         "port": 8083
+    },
+    "redis": {
+        "host": "127.0.0.1",
+        "port": 6379
     },
     "pg": {
         "host": "127.0.0.1",

@@ -63,28 +63,41 @@ redisContext* RedisConnect(const std::string& ip, const std::size_t port) {
     return c;
 }
 
+
 /**
- * Retrieves data from Redis based on the provided format and arguments.
- *
- * @param redis_conn A pointer to the Redis connection.
- * @param format The format string for the Redis command.
- * @param ... Additional arguments for the format string.
- * @return A pointer to the Redis reply containing the requested data, or nullptr if the reply is NULL or empty.
+ * @brief Retrieves a Redis reply by executing a Redis command with variable arguments.
+ * 
+ * This function takes a Redis connection and a format string with variable arguments, and executes the Redis command.
+ * It returns the Redis reply as a redisReply pointer.
+ * 
+ * @param redis_conn A pointer to the redisContext representing the Redis connection.
+ * @param format A format string specifying the Redis command to execute.
+ * @param ... Variable arguments to be used in the format string.
+ * @return A pointer to the redisReply representing the Redis reply, or nullptr if an error occurred.
  */
 redisReply* RedisGetByKey(redisContext *redis_conn, const char* format, ...) {
-    // Get request from Redis
+    if (redis_conn == nullptr) {
+        std::cerr << "Redis connection is null" << std::endl;
+        return nullptr;
+    }
+    
     va_list args;
     va_start(args, format);
     redisReply *reply = (redisReply*)redisvCommand(redis_conn, format, args);
     va_end(args);
 
-    if (reply == NULL || reply->type == REDIS_REPLY_NIL) {
-        if (reply) {
-            freeReplyObject(reply);
-        }
+    if (reply == nullptr) {
+        std::cerr << "Error executing Redis command: " << redis_conn->errstr << std::endl;
         redisFree(redis_conn);
         return nullptr;
     }
+
+    if (reply->type == REDIS_REPLY_NIL) {
+        std::cout << "Redis response in NIL: " << redis_conn->errstr << std::endl;
+        freeReplyObject(reply);
+        return nullptr;
+    }
+
     return reply;
 }
 
