@@ -30,15 +30,15 @@ void GlobalConfig::loadConfig(const std::string& configFile) {
             orchestrator.host = orchestratorData["host"].s();
             orchestrator.port = orchestratorData["port"].i();
 
-            auto frameAnalyticsData = configData["frame_analytics"];
+            auto frameAnalyticsData = configData["frame-analytics"];
             frame_analytics.host = frameAnalyticsData["host"].s();
             frame_analytics.port = frameAnalyticsData["port"].i();
 
-            auto videoPreProcessingData = configData["video_pre_processing"];
+            auto videoPreProcessingData = configData["video-pre-processing"];
             video_pre_processing.host = videoPreProcessingData["host"].s();
             video_pre_processing.port = videoPreProcessingData["port"].i();
 
-            auto videoPostProcessingData = configData["video_post_processing"];
+            auto videoPostProcessingData = configData["video-post-processing"];
             video_post_processing.host = videoPostProcessingData["host"].s();
             video_post_processing.port = videoPostProcessingData["port"].i();
 
@@ -46,7 +46,7 @@ void GlobalConfig::loadConfig(const std::string& configFile) {
             redis.host = redisData["host"].s();
             redis.port = redisData["port"].i();
 
-            auto pgDbData = configData["pg_db"];
+            auto pgDbData = configData["pg"];
             pg_db.dbname = pgDbData["database"].s();
             pg_db.user = pgDbData["user"].s();
             pg_db.password = pgDbData["password"].s();

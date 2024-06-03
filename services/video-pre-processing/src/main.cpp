@@ -1,3 +1,7 @@
+#include <crow.h>
+
+#include "../../../utils/cfg/global_config.h"
+
 #include "handlers/handlers_frw.h"
 
 int main() {
@@ -5,5 +9,9 @@ int main() {
 
     handlers::BindProcessVideoHandler(app);
 
-    app.port(8081).multithreaded().run();
+    const auto& config = cfg::GlobalConfig::getInstance();
+    const auto& app_config = config.getVideoPreProcessing();
+    app.port(app_config.port).multithreaded().run();
+
+    return 0;
 }

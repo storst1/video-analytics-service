@@ -50,6 +50,7 @@ void FilterYoloPyScriptOutput(std::string& output) {
  */
 std::string RunYoloScript(const std::string& folder_path) {
     std::string command = "python3 ../yolo/yolo_analyze.py " + folder_path;
+    std::cout << "Running YOLO script with command: " << command << std::endl;
     std::array<char, 128> buffer;
     std::string result;
     std::shared_ptr<FILE> pipe(popen(command.c_str(), "r"), pclose);

@@ -1,6 +1,6 @@
-#include <iostream>
-
 #include <crow.h>
+
+#include "../../../utils/cfg/global_config.h"
 
 #include "handlers/handlers_frw.h"
 #include "tasks/migrations.h"
@@ -14,7 +14,9 @@ int main()
     handlers::BindSubmitVideoHandler(app);
     handlers::BindStatusHandler(app);
 
-    app.port(8080).multithreaded().run();
+    const auto& config = cfg::GlobalConfig::getInstance();
+    const auto& app_config = config.getOrchestrator();
+    app.port(app_config.port).multithreaded().run();
 
     return 0;
 }

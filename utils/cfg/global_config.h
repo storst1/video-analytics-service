@@ -4,7 +4,7 @@
 
 namespace cfg {
 
-constexpr const char* CONFIG_FILE = "../../config/config.json";
+constexpr const char* CONFIG_FILE = "../../../config/config.json";
 
 class GlobalConfig {
 public:

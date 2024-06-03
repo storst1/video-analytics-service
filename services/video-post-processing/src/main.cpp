@@ -1,3 +1,7 @@
+#include <crow.h>
+
+#include "../../../utils/cfg/global_config.h"
+
 #include "handlers/save_video.h"
 
 int main() {
@@ -5,7 +9,9 @@ int main() {
 
     handlers::BindSaveVideoHandler(app);
 
-    app.port(8083).multithreaded().run();
+    const auto& config = cfg::GlobalConfig::getInstance();
+    const auto& app_config = config.getVideoPostProcessing();
+    app.port(app_config.port).multithreaded().run();
 
     return 0;
 }
