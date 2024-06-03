@@ -23,7 +23,7 @@
         "host": "127.0.0.1",
         "port": 5432,
         "database": "video-analytics-service",
-        "user": "postgres",
-        "password": "password"
+        "user": "postgres_video_analytics",
+        "password": "psw"
     }
 }
