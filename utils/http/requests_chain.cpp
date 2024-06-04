@@ -12,7 +12,7 @@ void RequestsChain::AddRequest(const std::string& host, const std::string& port,
 
 bool RequestsChain::Execute() {
     if (requests_.empty()) {
-        return false;
+        return true;
     }
 
     auto [host, port, target, body, handler] = requests_.front();

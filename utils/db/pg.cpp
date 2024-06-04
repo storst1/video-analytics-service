@@ -96,6 +96,7 @@ bool UpdateVideoStatus(const std::string& id, const std::string& video_status) {
 
         std::string query = "UPDATE analysis_results SET video_status = " +
                             W.quote(video_status) + " WHERE id = " + W.quote(id) + ";";
+        std::cout << "Query: " << query << std::endl;
 
         W.exec(query);
         W.commit();

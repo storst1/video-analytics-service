@@ -34,26 +34,23 @@ void OnYoloAnalyzeComplete(const crow::response& response, utils::http::Requests
         }
         redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::YoloFinished);
         chain.AddRequest(video_post.host, std::to_string(video_post.port), "/save_video", save_body, 
-[](const crow::response& res) {
+[&redis_conn, &id](const crow::response& res) {
             if (res.code == 200) {
                 std::cout << "Video analysis saved successfully\n";
+                redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Finished);
+                utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Finished));
             } else {
                 std::cout << "Failed to save video analysis\n";
+                redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Failed);
+                utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Failed));
             }
         });
         redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::PostProcessing);
         const bool able_to_exec = chain.Execute();
-        if (!able_to_exec && chain.GetRequestsCount() > 0){
-            const auto& redis = config.getRedis();
-            redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
-            if (redis_conn == nullptr) {
-                return;
-            }
+        if (!able_to_exec){
             redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Failed);
             utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Failed));
         }
-        redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Finished);
-        utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Finished));
     } else {
         std::cout << "Failed to start or finish YOLO analysis\n" << ". Response.body: " << response.body << std::endl;
         const auto& config = cfg::GlobalConfig::getInstance();
