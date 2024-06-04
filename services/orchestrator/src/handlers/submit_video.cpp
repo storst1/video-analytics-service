@@ -72,13 +72,13 @@ void OnYoloAnalyzeComplete(const crow::response& response, utils::http::Requests
  * @param id The ID of the video being processed.
  */
 void OnProcessVideoComplete(const crow::response& response, utils::http::RequestsChain& chain, const std::string& id) {
+    const auto& config = cfg::GlobalConfig::getInstance();
+    const auto& redis = config.getRedis();
+    redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
+    if (redis_conn == nullptr) {
+        return;
+    }
     if (response.code == 200) {
-        const auto& config = cfg::GlobalConfig::getInstance();
-        const auto& redis = config.getRedis();
-        redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
-        if (redis_conn == nullptr) {
-            return;
-        }
         redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::PreProcessingFinished);
 
         crow::json::wvalue yolo_body;
@@ -97,15 +97,10 @@ void OnProcessVideoComplete(const crow::response& response, utils::http::Request
         }
     } else {
         std::cout << "Failed to start video processing\n";
-        const auto& config = cfg::GlobalConfig::getInstance();
-        const auto& redis = config.getRedis();
-        redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
-        if (redis_conn == nullptr) {
-            return;
-        }
         redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Failed);
         utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Failed));
     }
+    redisFree(redis_conn);
 }
 
 /**
@@ -138,29 +133,23 @@ void SubmitVideoHandler(const crow::request& req, crow::response& res) {
 
     // Create a RequestsChain and perform the first HTTP POST request
     asio::io_context io_context;
-    utils::http::RequestsChain chain(io_context);
+    auto chain = std::make_shared<utils::http::RequestsChain>(io_context); // Используем shared_ptr для цепочки запросов
 
     crow::json::wvalue body;
     body["redis_id"] = id;
     body["video_path"] = video_path;
 
     const auto& pre_processing = config.getVideoPreProcessing();
-    chain.AddRequest(pre_processing.host, std::to_string(pre_processing.port), "/process_video", body,
-    [&chain, id](const crow::response& response) {
-        OnProcessVideoComplete(response, chain, id);
+    chain->AddRequest(pre_processing.host, std::to_string(pre_processing.port), "/process_video", body,
+    [chain, id](const crow::response& response) { // Используем shared_ptr для цепочки запросов
+        OnProcessVideoComplete(response, *chain, id);
     });
+
     redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::PreProcessingStarted);
-    const bool able_to_exec = chain.Execute();
-    if (!able_to_exec) {
-        const auto& config = cfg::GlobalConfig::getInstance();
-        const auto& redis = config.getRedis();
-        redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
-        if (redis_conn == nullptr) {
-            return;
-        }
-        redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Failed);
-        utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Failed));
-    }
+    
+    io_context.post([chain] {
+        chain->Execute();
+    });
 
     res.code = 200;
     res.write(id);
