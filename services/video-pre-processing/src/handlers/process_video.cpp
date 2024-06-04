@@ -67,7 +67,7 @@ void SplitFramesIntoDirectories(const std::string& frames_path) {
     std::size_t frame_count = 0;
     std::size_t dir_count = 0;
     const int frames_per_directory = 60;
-    std::string current_dir = frames_path + "../dir_" + std::to_string(dir_count);
+    std::string current_dir = frames_path + "/../dir_" + std::to_string(dir_count);
     fs::create_directory(current_dir);
 
     for (const auto& entry : fs::directory_iterator(frames_path)) {
