@@ -109,7 +109,7 @@ GlobalConfig& GlobalConfig::getInstance() {
     // TODO: Perhaps make it so it parses config every n seconds again
     static GlobalConfig instance;
     if (instance.orchestrator.host.empty()) {
-        instance.loadConfig(CONFIG_FILE, true);
+        instance.loadConfig(CONFIG_FILE);
     }
     return instance;
 }

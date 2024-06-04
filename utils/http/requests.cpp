@@ -15,10 +15,10 @@ std::string VideoStatusToString(const VideoStatus& status) {
     switch (status) {
     case VideoStatus::Received:
         return "Received";
-    case VideoStatus::PreProcessingFrames:
-        return "PreProcessingFrames";
-    case VideoStatus::PreProcessingResize:
-        return "PreProcessingResize";
+    case VideoStatus::PreProcessingStarted:
+        return "PreProcessingStarted";
+    case VideoStatus::PreProcessingFinished:
+        return "PreProcessingFinished";
     case VideoStatus::YoloStarted:
         return "YoloStarted";
     case VideoStatus::YoloFinished:
@@ -48,10 +48,10 @@ std::string VideoStatusToString(const VideoStatus& status) {
 VideoStatus StringToVideoStatus(const std::string& statusStr) {
     if (statusStr == "Received") {
         return VideoStatus::Received;
-    } else if (statusStr == "PreProcessingFrames") {
-        return VideoStatus::PreProcessingFrames;
-    } else if (statusStr == "PreProcessingResize") {
-        return VideoStatus::PreProcessingResize;
+    } else if (statusStr == "PreProcessingStarted") {
+        return VideoStatus::PreProcessingStarted;
+    } else if (statusStr == "PreProcessingFinished") {
+        return VideoStatus::PreProcessingFinished;
     } else if (statusStr == "YoloStarted") {
         return VideoStatus::YoloStarted;
     } else if (statusStr == "YoloFinished") {

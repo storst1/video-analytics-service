@@ -6,8 +6,8 @@ namespace requests {
 
 enum class VideoStatus {
     Received = 1,
-    PreProcessingFrames = 2,
-    PreProcessingResize = 3,
+    PreProcessingStarted = 2,
+    PreProcessingFinished = 3,
     YoloStarted = 4,
     YoloFinished = 5,
     FramesCleanUp = 6,

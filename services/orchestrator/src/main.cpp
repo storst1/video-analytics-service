@@ -13,6 +13,7 @@ int main()
 
     handlers::BindSubmitVideoHandler(app);
     handlers::BindStatusHandler(app);
+    handlers::BindStopHandler(app);
 
     const auto& config = cfg::GlobalConfig::getInstance();
     const auto& app_config = config.getOrchestrator();

@@ -67,7 +67,7 @@ void SplitFramesIntoDirectories(const std::string& frames_path) {
     std::size_t frame_count = 0;
     std::size_t dir_count = 0;
     const int frames_per_directory = 60;
-    std::string current_dir = frames_path + "/dir_" + std::to_string(dir_count);
+    std::string current_dir = frames_path + "../dir_" + std::to_string(dir_count);
     fs::create_directory(current_dir);
 
     for (const auto& entry : fs::directory_iterator(frames_path)) {
@@ -131,6 +131,28 @@ bool ExtractFrames(const std::string& video_path, const std::string& output_path
     return true;
 }
 
+/**
+ * Resizes all images in a folder using ffmpeg.
+ * 
+ * @param folder_path The path to the folder containing the images.
+ * @param width The width of the resized images.
+ * @param height The height of the resized images.
+ * @return true if the images were resized successfully, false otherwise.
+ */
+bool ResizeImagesInFolder(const std::string& folder_path, const std::size_t width, const std::size_t height) {
+    fs::create_directory(folder_path + "/resized");
+    const std::string command = "ffmpeg -y -hide_banner -loglevel panic -r 1 -f image2 -i \"" + 
+                           folder_path + "/%*.png\" -vf scale=" + std::to_string(width) + ":" 
+                           + std::to_string(height) + " \"" + folder_path + "/resized_%*.png\"";
+    std::cout << "Resizing images using command: " << command << std::endl;
+    int result = std::system(command.c_str());
+    if (result != 0) {
+        std::cerr << "Error: Failed to resize images using ffmpeg." << std::endl;
+        return false;
+    }
+    return true;
+}
+
 } // namespace
 
 /**
@@ -144,7 +166,7 @@ void BindProcessVideoHandler(crow::SimpleApp& app) {
     ([](const crow::request& req) {
         auto body = crow::json::load(req.body);
         if (!body) {
-            return crow::response(400, "Invalid JSON");
+            return crow::response(401, "Invalid JSON");
         }
 
         const std::string video_path = body["video_path"].s();
@@ -160,11 +182,9 @@ void BindProcessVideoHandler(crow::SimpleApp& app) {
             return crow::response(500, "Failed to get video status from Redis");
         }
         const auto& status = status_opt.value();
-        if (status != requests::VideoStatus::Received) {
-            return crow::response(400, "Invalid video status = " + requests::VideoStatusToString(status));
+        if (status == requests::VideoStatus::Failed || status == requests::VideoStatus::Stopped) {
+            return crow::response(400, "Pipe broken by video status = " + requests::VideoStatusToString(status));
         }
-
-        redis_utils::RedisUpdateVideoStatus(redis_conn, redis_id, requests::VideoStatus::PreProcessingFrames);
 
         // const int video_duration = GetVideoDuration(video_path);
         // if (video_duration == -1) {
@@ -179,7 +199,20 @@ void BindProcessVideoHandler(crow::SimpleApp& app) {
             return crow::response(500, "Failed to extract frames from video");
         }
 
-        ProcessFrames(output_path);
+        // Resize images
+        constexpr std::size_t resize_width = 600;
+        constexpr std::size_t resize_height = 400;
+        const bool resize_success = ResizeImagesInFolder(output_path, resize_width, resize_height);
+        if (!resize_success) {
+            return crow::response(500, "Failed to resize images");
+        }
+
+        if (status == requests::VideoStatus::Failed || status == requests::VideoStatus::Stopped) {
+            return crow::response(400, "Pipe broken by video status = " + requests::VideoStatusToString(status));
+        }
+
+        // Process the frames
+        ProcessFrames(output_path + "/resized");
 
         return crow::response(200, "Processing finished.");
     });

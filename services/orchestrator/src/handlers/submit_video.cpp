@@ -5,8 +5,10 @@
 #include <asio.hpp>
 
 #include "../../utils/http/requests_chain.h"
+#include "../../utils/http/requests.h"
 #include "../../utils/redis/redis.h"
 #include "../../utils/cfg/global_config.h"
+#include "../../utils/db/pg.h"
 
 namespace handlers {
 
@@ -25,6 +27,12 @@ void OnYoloAnalyzeComplete(const crow::response& response, utils::http::Requests
         save_body["redis_id"] = id;
         const auto& config = cfg::GlobalConfig::getInstance();
         const auto& video_post = config.getVideoPostProcessing();
+        const auto& redis = config.getRedis();
+        redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
+        if (redis_conn == nullptr) {
+            return;
+        }
+        redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::YoloFinished);
         chain.AddRequest(video_post.host, std::to_string(video_post.port), "/save_video", save_body, 
 [](const crow::response& res) {
             if (res.code == 200) {
@@ -33,7 +41,19 @@ void OnYoloAnalyzeComplete(const crow::response& response, utils::http::Requests
                 std::cout << "Failed to save video analysis\n";
             }
         });
-        chain.Execute();
+        redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::PostProcessing);
+        const bool able_to_exec = chain.Execute();
+        if (!able_to_exec && chain.GetRequestsCount() > 0){
+            const auto& redis = config.getRedis();
+            redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
+            if (redis_conn == nullptr) {
+                return;
+            }
+            redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Failed);
+            utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Failed));
+        }
+        redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Finished);
+        utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Finished));
     } else {
         std::cout << "Failed to start or finish YOLO analysis\n" << ". Response.body: " << response.body << std::endl;
         const auto& config = cfg::GlobalConfig::getInstance();
@@ -43,6 +63,7 @@ void OnYoloAnalyzeComplete(const crow::response& response, utils::http::Requests
             return;
         }
         redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Failed);
+        utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Failed));
     }
 }
 
@@ -55,15 +76,28 @@ void OnYoloAnalyzeComplete(const crow::response& response, utils::http::Requests
  */
 void OnProcessVideoComplete(const crow::response& response, utils::http::RequestsChain& chain, const std::string& id) {
     if (response.code == 200) {
+        const auto& config = cfg::GlobalConfig::getInstance();
+        const auto& redis = config.getRedis();
+        redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
+        if (redis_conn == nullptr) {
+            return;
+        }
+        redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::PreProcessingFinished);
+
         crow::json::wvalue yolo_body;
         yolo_body["redis_id"] = id;
         std::string frames_folder = std::filesystem::absolute("../../../tmp/frames/frames-" + id).string();
         yolo_body["frames_path"] = frames_folder;
-        const auto& config = cfg::GlobalConfig::getInstance();
         const auto& frame_analytics = config.getFrameAnalytics();
         chain.AddRequest(frame_analytics.host, std::to_string(frame_analytics.port), "/yolo_analyze_frames", yolo_body,
             std::bind(OnYoloAnalyzeComplete, std::placeholders::_1, std::ref(chain), id));
-        chain.Execute();
+
+        redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::YoloStarted);
+        const bool able_to_exec = chain.Execute();
+        if (!able_to_exec) {
+            redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Failed);
+            utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Failed));
+        }
     } else {
         std::cout << "Failed to start video processing\n";
         const auto& config = cfg::GlobalConfig::getInstance();
@@ -73,6 +107,7 @@ void OnProcessVideoComplete(const crow::response& response, utils::http::Request
             return;
         }
         redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Failed);
+        utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Failed));
     }
 }
 
@@ -101,6 +136,9 @@ void SubmitVideoHandler(const crow::request& req, crow::response& res) {
     // Save request to redis
     redis_utils::RedisSaveVideoRequest(redis_conn, video_request);
 
+    // Save video to database
+    utils::db::SaveRequestOnReceive(video_request.id);
+
     // Create a RequestsChain and perform the first HTTP POST request
     asio::io_context io_context;
     utils::http::RequestsChain chain(io_context);
@@ -114,7 +152,18 @@ void SubmitVideoHandler(const crow::request& req, crow::response& res) {
     [&chain, id](const crow::response& response) {
         OnProcessVideoComplete(response, chain, id);
     });
-    chain.Execute();
+    redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::PreProcessingStarted);
+    const bool able_to_exec = chain.Execute();
+    if (!able_to_exec) {
+        const auto& config = cfg::GlobalConfig::getInstance();
+        const auto& redis = config.getRedis();
+        redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
+        if (redis_conn == nullptr) {
+            return;
+        }
+        redis_utils::RedisUpdateVideoStatus(redis_conn, id, requests::VideoStatus::Failed);
+        utils::db::UpdateVideoStatus(id, requests::VideoStatusToString(requests::VideoStatus::Failed));
+    }
 
     res.code = 200;
     res.write(id);

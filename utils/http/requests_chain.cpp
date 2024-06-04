@@ -10,8 +10,10 @@ void RequestsChain::AddRequest(const std::string& host, const std::string& port,
     requests_.emplace_back(host, port, target, body, handler);
 }
 
-void RequestsChain::Execute() {
-    if (requests_.empty()) return;
+bool RequestsChain::Execute() {
+    if (requests_.empty()) {
+        return false;
+    }
 
     auto [host, port, target, body, handler] = requests_.front();
     requests_.erase(requests_.begin());
@@ -22,6 +24,23 @@ void RequestsChain::Execute() {
 
         asio::ip::tcp::socket socket(io_context_);
         asio::connect(socket, endpoints);
+
+        // Ping the server
+        asio::steady_timer timer(io_context_, std::chrono::seconds(2));
+        bool ping_success = false;
+        timer.async_wait([&](const asio::error_code& ec) {
+            if (!ec) {
+                ping_success = true;
+                socket.cancel();
+            }
+        });
+
+        io_context_.run();
+        io_context_.restart();
+
+        if (!ping_success) {
+            return false;
+        }
 
         const std::string body_str = body.dump();
 
@@ -70,10 +89,11 @@ void RequestsChain::Execute() {
         }
 
         // Execute the next request in the chain
-        Execute();
+        return Execute();
 
     } catch (std::exception& e) {
         std::cerr << "Exception: " << e.what() << "\n";
+        return false;
     }
 }
 

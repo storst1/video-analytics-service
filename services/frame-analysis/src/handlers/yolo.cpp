@@ -113,25 +113,34 @@ std::optional<std::string> RunYoloScriptInSubdirectories(const std::string& fold
 void BindYoloHandler(crow::SimpleApp& app) {
     CROW_ROUTE(app, "/yolo_analyze_frames").methods(crow::HTTPMethod::POST)
     ([](const crow::request& req) {
+        std::cout << "Received request for /yolo_analyze_frames" << std::endl;
         auto body = crow::json::load(req.body);
         if (!body) {
+            std::cerr << "Invalid JSON received" << std::endl;
             return crow::response(400, "Invalid JSON");
         }
 
         const std::string redis_id = body["redis_id"].s();
         const std::string frames_path = body["frames_path"].s();
+        std::cout << "Parsed request body: redis_id=" << redis_id << ", frames_path=" << frames_path << std::endl;
 
         const auto& config = cfg::GlobalConfig::getInstance();
         const auto& redis = config.getRedis();
         redisContext *redis_conn = redis_utils::RedisConnect(redis.host, redis.port);
         if (redis_conn == nullptr) {
+            std::cerr << "Redis connection error" << std::endl;
+            redis_utils::RedisUpdateVideoStatus(redis_conn, redis_id, requests::VideoStatus::Failed);
             return crow::response(500, "Redis connection error");
         }
+        std::cout << "Connected to Redis" << std::endl;
         redis_utils::RedisUpdateVideoStatus(redis_conn, redis_id, requests::VideoStatus::YoloStarted);
 
         try {
             auto result_str_opt = RunYoloScriptInSubdirectories(frames_path, redis_id, redis_conn);
             if (!result_str_opt.has_value()) {
+                std::cerr << "Failed to run YOLO script" << std::endl;
+                redis_utils::RedisUpdateVideoStatus(redis_conn, redis_id, requests::VideoStatus::Failed);
+                redisFree(redis_conn);
                 return crow::response(500, "Failed to run YOLO script");
             }
 
@@ -140,23 +149,26 @@ void BindYoloHandler(crow::SimpleApp& app) {
 
             const auto result_json = crow::json::load(result_str);
             if (!result_json) {
-                std::cout << "Yolo response str: " << result_str << std::endl;
-                return crow::response(500, "Failed to parse YOLO result. Yolo response str:" + result_str);
+                std::cerr << "Failed to parse YOLO result. Yolo response str: " << result_str << std::endl;
+                redis_utils::RedisUpdateVideoStatus(redis_conn, redis_id, requests::VideoStatus::Failed);
+                redisFree(redis_conn);
+                return crow::response(500, "Failed to parse YOLO result. Yolo response str: " + result_str);
             }
 
             std::cout << "Finished YOLO analysis" << std::endl;
 
             // Save YOLO result to redis
             redis_utils::RedisSaveYoloResponse(redis_conn, redis_id, result_json);
-            redisFree(redis_conn);
-
             redis_utils::RedisUpdateVideoStatus(redis_conn, redis_id, requests::VideoStatus::YoloFinished);
+            redisFree(redis_conn);
 
             return crow::response(200, result_str);
         } catch (const std::exception& e) {
+            std::cerr << "Exception in YOLO handler: " << e.what() << std::endl;
             return crow::response(500, e.what());
         }
     });
 }
+
 
 } // namespace handlers

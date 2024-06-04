@@ -14,31 +14,8 @@ namespace http {
 /**
  * @brief Represents a chain of HTTP requests.
  * 
- * The RequestsChain class allows you to create a chain of HTTP requests that will be executed sequentially.
+ * The RequestsChain class allows you to add multiple HTTP requests to a chain and execute them sequentially.
  * Each request in the chain can have its own host, port, target, body, and response handler.
- * The requests are executed in the order they were added to the chain.
- * 
- * Usage:
- * 1. Create an instance of RequestsChain, passing an asio::io_context object to the constructor.
- * 2. Add requests to the chain using the AddRequest() method.
- * 3. Call the Execute() method to start executing the requests in the chain.
- * 
- * Example:
- * @code
- * asio::io_context io_context;
- * utils::http::RequestsChain chain(io_context);
- * 
- * chain.AddRequest("example.com", "80", "/api/endpoint1", {{"param1", "value1"}}, [](const crow::response& response) {
- *     // Handle response for the first request
- * });
- * 
- * chain.AddRequest("example.com", "80", "/api/endpoint2", {{"param2", "value2"}}, [](const crow::response& response) {
- *     // Handle response for the second request
- * });
- * 
- * chain.Execute();
- * io_context.run();
- * @endcode
  */
 class RequestsChain {
 public:
@@ -69,8 +46,18 @@ public:
      * 
      * The requests are executed sequentially in the order they were added to the chain.
      * The response handlers are called for each request after the response is received.
+     * 
+     * @return true if all requests were executed successfully, false otherwise.
      */
-    void Execute();
+    bool Execute();
+
+    std::size_t GetRequestsCount() const {
+        return requests_.size();
+    }
+
+    bool IsEmpty() const {
+        return requests_.empty();
+    }
 
 private:
     asio::io_context& io_context_;

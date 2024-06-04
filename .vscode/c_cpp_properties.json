@@ -6,6 +6,7 @@
                 "${workspaceFolder}/**",
                 "C:/Program Files/clang/include",
                 "${workspaceFolder}/deps/asio/asio/include",
+                "${workspaceFolder}/deps/libpqxx/include",
                 "${workspaceFolder}/services/video-pre-processing/build/_deps/crow-src/include",
                 "${workspaceFolder}/services/orchestrator/build/_deps/crow-src/include",
                 "${workspaceFolder}/utils/**"

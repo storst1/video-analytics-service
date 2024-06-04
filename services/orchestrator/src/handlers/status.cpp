@@ -2,6 +2,7 @@
 
 #include "../../utils/redis/redis.h"
 #include "../../utils/cfg/global_config.h"
+#include "pg.h"
 
 namespace handlers {
 
@@ -27,7 +28,26 @@ void BindStatusHandler(crow::SimpleApp& app) {
 
         redisReply *reply = redis_utils::RedisGetByKey(redis_conn, "HGETALL request:%s", id.c_str());
         if (reply == nullptr) {
-            return crow::response(404, "Video not found");
+            const auto pg_status = utils::db::GetVideoStatus(id);
+            if (!pg_status.has_value()) {
+                return crow::response(404, "Video with given id not found");
+            }
+            const auto pg_status_enum = requests::StringToVideoStatus(pg_status.value());
+            if (pg_status_enum == requests::VideoStatus::Finished) {
+                const auto pg_result = utils::db::GetAnalysisResult(id);
+                if (!pg_result.has_value()) {
+                    return crow::response(404, "Analysis result not found");
+                }
+                return crow::response(200, crow::json::wvalue{
+                    {"id", id},
+                    {"status", pg_status.value()},
+                    {"result", pg_result.value()},
+                });
+            }
+            return crow::response(200, crow::json::wvalue{
+                {"id", id},
+                {"status", pg_status.value()},
+            });
         }
 
         crow::json::wvalue response;
@@ -38,7 +58,7 @@ void BindStatusHandler(crow::SimpleApp& app) {
                 response["id"] = value;
             }
             else if (key == "path") { 
-                response["path"] = value;
+                continue;
             }
             else if (key == "status") { 
                 response["status"] = value;
