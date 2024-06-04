@@ -132,6 +132,20 @@ bool ExtractFrames(const std::string& video_path, const std::string& output_path
 }
 
 /**
+ * Copies all .png files from one directory to another.
+ * 
+ * @param source_dir The path to the source directory.
+ * @param destination_dir The path to the destination directory.
+ */
+void CopyPngFiles(const std::string& source_dir, const std::string& destination_dir) {
+    for (const auto& entry : fs::directory_iterator(source_dir)) {
+        if (entry.is_regular_file() && entry.path().extension() == ".png") {
+            fs::copy_file(entry.path(), destination_dir + "/" + entry.path().filename().string());
+        }
+    }
+}
+
+/**
  * Resizes all images in a folder using ffmpeg.
  * 
  * @param folder_path The path to the folder containing the images.
@@ -139,15 +153,21 @@ bool ExtractFrames(const std::string& video_path, const std::string& output_path
  * @param height The height of the resized images.
  * @return true if the images were resized successfully, false otherwise.
  */
-bool ResizeImagesInFolder(const std::string& folder_path, const std::size_t width, const std::size_t height) {
+bool ResizeImagesInFolder(const std::string& folder_path, const std::size_t width, const std::size_t height, 
+                          std::function<void(const std::string&, const std::string&)> fallback = nullptr){
     fs::create_directory(folder_path + "/resized");
-    const std::string command = "ffmpeg -y -hide_banner -loglevel panic -r 1 -f image2 -i \"" + 
+    const std::string command = std::string(FFMPEG_EXECUTABLE) + " -y -hide_banner -loglevel panic -r 1 -f image2 -i \"" + 
                            folder_path + "/%*.png\" -vf scale=" + std::to_string(width) + ":" 
                            + std::to_string(height) + " \"" + folder_path + "/resized_%*.png\"";
     std::cout << "Resizing images using command: " << command << std::endl;
     int result = std::system(command.c_str());
     if (result != 0) {
         std::cerr << "Error: Failed to resize images using ffmpeg." << std::endl;
+        if (fallback) {
+            std::cout << "Using fallback" << std::endl;
+            fallback(folder_path, folder_path + "/resized");
+            return true;
+        }
         return false;
     }
     return true;
@@ -202,7 +222,7 @@ void BindProcessVideoHandler(crow::SimpleApp& app) {
         // Resize images
         constexpr std::size_t resize_width = 600;
         constexpr std::size_t resize_height = 400;
-        const bool resize_success = ResizeImagesInFolder(output_path, resize_width, resize_height);
+        const bool resize_success = ResizeImagesInFolder(output_path, resize_width, resize_height, CopyPngFiles);
         if (!resize_success) {
             return crow::response(500, "Failed to resize images");
         }
